@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="top-bar">
+  🚚 Frete grátis nas compras acima de <span>R$ 300</span> · Use o cupom <span>LKMODAS10</span> e ganhe 10% OFF
+</div>
+
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="LK Modas Logo" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="produtos.html" class="active">Produtos</a></li>
+       
+        <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+        <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <a href="minha-conta.html" class="user-btn" id="minha-conta-btn" style="text-decoration:none">👤 Minha Conta</a>
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+      <button class="mobile-menu-btn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <button class="close-btn">✕</button>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="produtos.html">Todos os Produtos</a></li>
+    <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+    <li><a href="minha-conta.html">👤 Minha Conta</a></li>
+    <li><a href="carrinho.html">Carrinho</a></li>
+    <li><a href="login.html">Entrar / Cadastrar</a></li>
+  </ul>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <h1><em style="color:var(--gold);font-style:italic">Nossa Coleção</em></h1>
+  <p>Explore todas as peças com estilo e qualidade LK Moda Masculina</p>
+</section>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="container filters-inner">
+    <span class="filter-label">Filtrar:</span>
+    <button class="filter-btn active" data-filter="todos">Todos</button>
+    
+    <button class="filter-btn" data-filter="masculino">Masculino</button>
+    <button class="filter-btn" data-filter="infantil">Infantil</button>
+    <span class="products-count" id="products-count"></span>
+  </div>
+</div>
+
+<!-- PRODUCTS GRID -->
+<section class="products-section">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <span>Produtos</span>
+    </div>
+    <div class="product-grid" id="products-grid"></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">LK<span style="color:var(--crimson)"></span><em style="color:var(--gold);font-style:italic">Moda Masculina</em></div>
+        <p>Moda acessível que transforma o seu estilo.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Loja</h4>
+        <ul>
+          <li><a href="produtos.html">Todos Produtos</a></li>
+         
+          <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+          <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Conta</h4>
+        <ul>
+          <li><a href="login.html">Entrar</a></li>
+          <li><a href="cadastro.html">Cadastrar</a></li>
+          <li><a href="carrinho.html">Carrinho</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Suporte</h4>
+        <ul>
+          <li><a href="#">Central de Ajuda</a></li>
+          <li><a href="#">Trocas</a></li>
+          <li><a href="#">Contato</a></li>
+          <li><a href="#">Tel: (16) 99360-3482</a></li>
+          <li><a href="https://www.instagram.com/masculinalkmodas?igsh=cHduOGY1NXVicnB3" target="_blank">Instagram: @masculinalkmodas</a></li>
+          <li><a href="https://www.facebook.com/leandro.brodowski" target="_blank">Facebook: @Leandro Brodowski</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 LK Moda Masculina. Todos os direitos reservados.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

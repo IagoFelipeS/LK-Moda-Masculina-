@@ -1,0 +1,22 @@
+# Node
+node_modules/
+.npm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Debug/test files (já removidos, mas por precaução)
+test_*.js
+test_*.py
+*-diagnostico.html
+*-upload-test.html
+teste-carregamento.html
+
+# Env
+.env
+.env.local
+.env.production

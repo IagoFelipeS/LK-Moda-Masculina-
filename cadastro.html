@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Conta — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="LK Moda Masculina Logo" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="auth-layout">
+  <!-- VISUAL -->
+  <div class="auth-visual">
+    <div class="logo-big">LK<span> </span>Moda Masculina</div>
+    <p>Crie sua conta e tenha acesso a ofertas exclusivas, acompanhamento de pedidos e muito mais.</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="auth-form-wrap">
+    <h2>Criar Conta</h2>
+    <p class="sub">É rápido, gratuito e fácil</p>
+
+    <form id="cadastro-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="nome">Nome Completo</label>
+        <input class="form-input" type="text" id="nome" name="nome" placeholder="Seu nome completo" autocomplete="name">
+        <p class="form-error" id="nome-error"></p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail</label>
+        <input class="form-input" type="email" id="email" name="email" placeholder="seu@email.com" autocomplete="email">
+        <p class="form-error" id="email-error"></p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="senha">Senha</label>
+        <input class="form-input" type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        <p class="form-error" id="senha-error"></p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="confirma">Confirmar Senha</label>
+        <input class="form-input" type="password" id="confirma" name="confirma" placeholder="Repita a senha" autocomplete="new-password">
+        <p class="form-error" id="confirma-error"></p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="color:var(--gold);">Criar Conta</button>
+    </form>
+
+    <div class="divider">ou</div>
+    <p class="form-footer">Já tem conta? <a href="login.html">Fazer login</a></p>
+  </div>
+</div>
+
+<div class="toast"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

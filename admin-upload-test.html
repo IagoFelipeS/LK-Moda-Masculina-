@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Upload — Admin LK Moda</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .test-container { max-width: 600px; margin: 40px auto; padding: 20px; }
+    .test-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .test-section h3 { margin-top: 0; color: #333; }
+    .test-result { margin-top: 10px; padding: 10px; border-radius: 4px; font-size: 0.9rem; }
+    .result-pass { background: #d4edda; color: #155724; }
+    .result-fail { background: #f8d7da; color: #721c24; }
+    .result-info { background: #d1ecf1; color: #0c5460; }
+    .paste-zone { 
+      border: 2px dashed #999; 
+      border-radius: 8px; 
+      padding: 40px; 
+      text-align: center; 
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafafa;
+    }
+    .paste-zone:hover { background: #f0f0f0; }
+    .paste-zone.active { 
+      border-color: #c41e3a; 
+      background: rgba(196, 30, 58, 0.05);
+      border-width: 3px;
+    }
+    .preview-img { max-width: 100%; max-height: 200px; border-radius: 4px; margin-top: 10px; }
+    button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: #c41e3a; color: white; }
+    .btn-primary:hover { background: #a01830; }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 Teste de Sistema de Upload de Fotos — Admin</h1>
+    
+    <div class="test-section">
+      <h3>✅ Funcionalidades Implementadas</h3>
+      <ul>
+        <li>✓ Colagem (Ctrl+V) de fotos do explorador</li>
+        <li>✓ Drag & Drop de arquivos</li>
+        <li>✓ Seleção via botão 📁</li>
+        <li>✓ Cole de URL de imagens</li>
+        <li>✓ Visualização em tempo real</li>
+        <li>✓ Suporte a até 3 fotos por produto</li>
+      </ul>
+    </div>
+
+    <div class="test-section">
+      <h3>📋 Como Testar</h3>
+      <ol>
+        <li><strong>Acesse: </strong><a href="admin.html" target="_blank">admin.html</a></li>
+        <li><strong>Faça login com:</strong>
+          <ul>
+            <li>E-mail: <code>lkmodamasculina089@gmail.com</code></li>
+            <li>Senha: <code>kamperlk122709!</code></li>
+            <li>Código 2FA: será exibido na tela (DEMO)</li>
+          </ul>
+        </li>
+        <li><strong>Vá para:</strong> Adicionar Produto</li>
+        <li><strong>Teste cada método:</strong></li>
+      </ol>
+    </div>
+
+    <div class="test-section">
+      <h3>🖼️ Método 1: Ctrl+V (Copiar do Explorador)</h3>
+      <div id="test-paste-zone" class="paste-zone">
+        <span style="font-size: 2rem; display: block;">📷</span>
+        <p>Clique aqui e pressione <strong>Ctrl+V</strong></p>
+        <p style="font-size: 0.85rem; color: #666;">Copie uma imagem do seu explorador de arquivos e cole aqui</p>
+      </div>
+      <div id="paste-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>📁 Método 2: Seleção de Arquivo</h3>
+      <label>
+        <button class="btn-primary">📁 Escolher Arquivo</button>
+        <input type="file" accept="image/*" id="file-input" style="display: none;">
+      </label>
+      <div id="file-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>🔗 Método 3: Cole de URL</h3>
+      <input type="text" id="url-input" placeholder="https://exemplo.com/imagem.jpg" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+      <button class="btn-primary" onclick="testUrlPaste()">Testar URL</button>
+      <div id="url-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>🎯 Método 4: Drag & Drop</h3>
+      <div id="drag-zone" class="paste-zone" style="min-height: 150px; display: flex; align-items: center; justify-content: center;">
+        <div>
+          <span style="font-size: 2rem; display: block;">📥</span>
+          <p>Arraste uma imagem aqui</p>
+        </div>
+      </div>
+      <div id="drag-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>✔️ Checklist de Validação</h3>
+      <label>
+        <input type="checkbox"> Imagem colada aparece em tempo real
+      </label><br>
+      <label>
+        <input type="checkbox"> Zona muda cor quando recebe imagem
+      </label><br>
+      <label>
+        <input type="checkbox"> Mensagens de sucesso aparecem
+      </label><br>
+      <label>
+        <input type="checkbox"> É possível adicionar até 3 fotos
+      </label><br>
+      <label>
+        <input type="checkbox"> Validação de tamanho funciona (máx 8MB)
+      </label><br>
+    </div>
+  </div>
+
+  <script>
+    const showMsg = (el, text, isPass) => {
+      el.innerHTML = `<div class="test-result ${isPass ? 'result-pass' : 'result-fail'}">${isPass ? '✓' : '✗'} ${text}</div>`;
+      el.style.display = 'block';
+    };
+
+    // Teste Paste
+    document.getElementById('test-paste-zone').addEventListener('paste', e => {
+      e.preventDefault();
+      const file = e.clipboardData?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        showMsg(document.getElementById('paste-result'), `Imagem colada: ${file.name} (${(file.size / 1024).toFixed(0)}KB)`, true);
+      }
+    });
+
+    document.getElementById('test-paste-zone').addEventListener('click', function() {
+      this.focus();
+    });
+
+    // Teste File
+    document.getElementById('file-input').addEventListener('change', e => {
+      const file = e.target.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        showMsg(document.getElementById('file-result'), `Arquivo selecionado: ${file.name} (${(file.size / 1024).toFixed(0)}KB)`, true);
+      } else {
+        showMsg(document.getElementById('file-result'), 'Selecione um arquivo de imagem', false);
+      }
+    });
+
+    // Teste URL
+    window.testUrlPaste = () => {
+      const url = document.getElementById('url-input').value.trim();
+      if (/^https?:\/\//.test(url)) {
+        showMsg(document.getElementById('url-result'), `URL válida: ${url}`, true);
+        const img = new Image();
+        img.onload = () => {
+          showMsg(document.getElementById('url-result'), `✓ URL funcionando (${img.width}×${img.height}px)`, true);
+        };
+        img.onerror = () => {
+          showMsg(document.getElementById('url-result'), `URL carregada mas pode não ser uma imagem válida`, false);
+        };
+        img.src = url;
+      } else {
+        showMsg(document.getElementById('url-result'), 'Cole uma URL válida (https://...)', false);
+      }
+    };
+
+    // Teste Drag & Drop
+    const dragZone = document.getElementById('drag-zone');
+    dragZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dragZone.classList.add('active');
+    });
+    dragZone.addEventListener('dragleave', () => {
+      dragZone.classList.remove('active');
+    });
+    dragZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dragZone.classList.remove('active');
+      const file = e.dataTransfer?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        showMsg(document.getElementById('drag-result'), `Arquivo arrastado: ${file.name} (${(file.size / 1024).toFixed(0)}KB)`, true);
+      }
+    });
+  </script>
+</body>
+</html>

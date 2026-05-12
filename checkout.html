@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+    .cep-wrapper { position: relative; }
+    .cep-wrapper input { padding-right: 40px; }
+    .cep-spinner {
+      display: none; position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%); width: 16px; height: 16px;
+      border: 2px solid var(--gray-200); border-top-color: var(--crimson);
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    .cep-spinner.active { display: block; }
+    .cep-ok {
+      display: none; position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%); color: #27ae60; font-size: 1rem; font-weight: 700;
+    }
+    .cep-ok.show { display: block; }
+    .frete-card {
+      display: none; border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius); overflow: hidden; margin-top: 16px;
+    }
+    .frete-card.show { display: block; animation: freteIn .3s ease; }
+    @keyframes freteIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .frete-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px; cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background var(--transition);
+    }
+    .frete-option:last-child { border-bottom: none; }
+    .frete-option:hover { background: var(--gray-100); }
+    .frete-option.selected { background: #fff8f0; }
+    .frete-option input[type=radio] { accent-color: var(--crimson); }
+    .frete-info { flex: 1; }
+    .frete-name { font-size: .88rem; font-weight: 600; }
+    .frete-eta { font-size: .75rem; color: var(--gray-400); margin-top: 2px; }
+    .frete-price { font-weight: 700; font-size: .92rem; color: var(--crimson); }
+    .cep-msg {
+      font-size: .75rem; margin-top: 5px; display: none;
+    }
+    .cep-msg.show { display: block; }
+    .cep-msg.error { color: var(--crimson); }
+    .cep-msg.info { color: #27ae60; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="LK Moda Masculina Logo" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero">
+  <h1 style="color:var(--gold);">Finalizar Compra</h1>
+  <p>Preencha seus dados de entrega e escolha a forma de pagamento</p>
+</section>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Home</a> <span>/</span>
+    <a href="carrinho.html">Carrinho</a> <span>/</span>
+    <span>Checkout</span>
+  </div>
+
+  <!-- HIDDEN payment method input -->
+  <input type="hidden" id="payment-method" value="">
+  <input type="hidden" id="frete-valor" value="0">
+  <input type="hidden" id="frete-tipo" value="">
+
+  <div class="checkout-layout">
+    <!-- LEFT: FORM -->
+    <form id="checkout-form" novalidate data-custom-checkout="true">
+
+      <!-- DELIVERY -->
+      <div class="checkout-section">
+        <h3 class="checkout-section-title">
+          <span class="step-num">1</span>
+          Dados de Entrega
+        </h3>
+        <div class="form-group">
+          <label class="form-label" for="nome">Nome Completo *</label>
+          <input class="form-input" type="text" id="nome" placeholder="Seu nome completo">
+          <p class="form-error" id="nome-error"></p>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="email">E-mail</label>
+            <input class="form-input" type="email" id="email" name="email" placeholder="seu@email.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="document">CPF/CNPJ</label>
+            <input class="form-input" type="text" id="document" name="document" placeholder="000.000.000-00" maxlength="18">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="endereco">Endereço *</label>
+          <input class="form-input" type="text" id="endereco" placeholder="Rua, número, complemento">
+          <p class="form-error" id="endereco-error"></p>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cep">CEP *</label>
+            <div class="cep-wrapper">
+              <input class="form-input" type="text" id="cep" placeholder="00000-000" maxlength="9" autocomplete="postal-code">
+              <div class="cep-spinner" id="cep-spinner"></div>
+              <div class="cep-ok" id="cep-ok">✓</div>
+            </div>
+            <p class="cep-msg error" id="cep-error">CEP não encontrado. Verifique e tente novamente.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cidade">Cidade *</label>
+            <input class="form-input" type="text" id="cidade" placeholder="Preenchido pelo CEP" readonly style="background:var(--gray-100);cursor:default">
+            <p class="form-error" id="cidade-error"></p>
+          </div>
+         
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="estado">Estado</label>
+            <input class="form-input" type="text" id="estado" placeholder="—" readonly style="background:var(--gray-100);cursor:default">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="telefone">Telefone</label>
+            <input class="form-input" type="tel" id="telefone" placeholder="(00) 00000-0000">
+          </div>
+        </div>
+
+        <!-- Opções de frete — aparecem após digitar o CEP -->
+        <div class="frete-card show" id="frete-card">
+          <div class="frete-option selected" id="opt-pac">
+            <input type="radio" name="frete" value="pac" checked>
+            <div class="frete-info">
+              <div class="frete-name">PAC — Correios</div>
+              <div class="frete-eta" id="pac-eta">Carregando...</div>
+            </div>
+            <span class="frete-price" id="pac-price">—</span>
+          </div>
+          <div class="frete-option" id="opt-sedex">
+            <input type="radio" name="frete" value="sedex">
+            <div class="frete-info">
+              <div class="frete-name">SEDEX — Correios</div>
+              <div class="frete-eta" id="sedex-eta">Carregando...</div>
+            </div>
+            <span class="frete-price" id="sedex-price">—</span>
+          </div>
+          <div class="frete-option" id="opt-retirar">
+            <input type="radio" name="frete" value="retirar">
+            <div class="frete-info">
+              <div class="frete-name">Retirar na loja</div>
+              <div class="frete-eta" id="retirar-eta">R$ 0,00 — R. Maria Judite Gentil, 9 Brodowski - SP</div>
+            </div>
+            <span class="frete-price">Grátis</span>
+          </div>
+        </div>
+        <div class="pickup-info" id="pickup-info" style="display:none; margin-top:12px; padding:14px; background:#f8f4e9; border-radius:6px; border:1px solid #e6d8b3;">
+          <p style="margin:0; font-weight:600;">Retirada na loja</p>
+          <p style="margin:6px 0 0; color:#555;">Endereço: R. Maria Judite Gentil, 9 Brodowski - SP</p>
+        </div>
+      </div>
+
+      <!-- PAYMENT -->
+      <div class="checkout-section">
+        <h3 class="checkout-section-title">
+          <span class="step-num">2</span>
+          Forma de Pagamento
+        </h3>
+        <div class="payment-options">
+          <div class="payment-opt" data-method="cartao">
+            <div class="icon">💳</div>
+            <span>Cartão</span>
+          </div>
+          <div class="payment-opt" data-method="pix">
+            <div class="icon">⚡</div>
+            <span>Pix</span>
+          </div>
+        </div>
+
+        <!-- Card fields -->
+        <div id="card-fields" style="margin-top:20px;display:none">
+          <div class="form-group">
+            <label class="form-label">Número do Cartão</label>
+            <input class="form-input" type="text" placeholder="0000 0000 0000 0000" maxlength="19" id="card-number">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Validade</label>
+              <input class="form-input" type="text" placeholder="MM/AA" maxlength="5" id="card-expiry">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CVV</label>
+              <input class="form-input" type="text" placeholder="000" maxlength="4" id="card-cvv">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome no Cartão</label>
+            <input class="form-input" type="text" placeholder="Como aparece no cartão" id="card-name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parcelamento</label>
+            <select class="form-input" id="installments">
+              <option value="1x sem juros">1x sem juros</option>
+              <option value="2x sem juros">2x sem juros</option>
+              <option value="3x sem juros">3x sem juros</option>
+              <option value="4x sem juros">4x sem juros</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pix info -->
+        <div id="pix-info" style="margin-top:20px;display:none;background:var(--gray-100);padding:20px;border-radius:4px;text-align:center">
+          <div style="font-size:2rem;margin-bottom:8px">⚡</div>
+          <p style="font-weight:600;margin-bottom:4px">Pagamento via Pix</p>
+          <p style="font-size:.85rem;color:var(--gray-600)">O QR Code será gerado após confirmar o pedido. Aprovação em segundos!</p>
+        </div>
+
+      </div>
+
+      <button type="submit" class="btn btn-crimson btn-full" style="font-size:1rem;padding:16px">
+        Confirmar Pedido →
+      </button>
+      <p style="font-size:.78rem;color:var(--gray-400);text-align:center;margin-top:12px">
+        🔒 Seus dados estão protegidos com criptografia SSL
+      </p>
+    </form>
+
+    <!-- RIGHT: ORDER SUMMARY -->
+    <div class="order-summary">
+      <h3>Resumo do Pedido</h3>
+      <div id="order-items"></div>
+      <div class="order-divider"></div>
+      <div class="summary-line" style="margin-bottom:8px">
+        <span style="font-size:.85rem">Subtotal</span>
+        <span style="font-size:.85rem" id="order-total">R$ 0,00</span>
+      </div>
+      <div class="summary-line" style="margin-bottom:8px">
+        <span style="font-size:.85rem">Frete</span>
+        <span style="font-size:.85rem" id="order-shipping">Informe o CEP</span>
+      </div>
+      <div class="order-divider"></div>
+      <div class="summary-line" style="font-weight:700">
+        <span>Total</span>
+        <span style="color:var(--crimson);font-size:1.1rem" id="order-grand-total">R$ 0,00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal" style="max-width:600px;max-height:80vh;overflow-y:auto">
+    <div class="check-icon">✓</div>
+    <h2>Pedido Confirmado!</h2>
+    <p>Seu pedido <strong id="success-order-id" style="color:var(--crimson)"></strong> foi realizado com sucesso. Você receberá atualizações sobre a entrega.</p>
+    <a class="btn btn-primary btn-full" id="btn-track-order" href="minha-conta.html">📦 Meus Pedidos</a>
+    <button class="btn btn-outline btn-full" id="go-home" style="margin-top:10px">Continuar Comprando</button>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2026 LK Moda Masculina. Todos os direitos reservados.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast"></div>
+<!-- Firebase SDK (compat - funciona com Live Server) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="emailjs-lkmodas.js"></script>
+<script src="script.js"></script>
+<script>
+// Payment option toggle
+document.querySelectorAll('.payment-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.payment-opt').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    const method = opt.dataset.method;
+    document.getElementById('payment-method').value = method; // Atualiza o hidden input
+    document.getElementById('card-fields').style.display = method === 'cartao' ? 'block' : 'none';
+    document.getElementById('pix-info').style.display = method === 'pix' ? 'block' : 'none';
+  });
+});
+// Card number format
+const cardNum = document.getElementById('card-number');
+if (cardNum) {
+  cardNum.addEventListener('input', () => {
+    let v = cardNum.value.replace(/\D/g,'');
+    v = v.match(/.{1,4}/g)?.join(' ') || v;
+    cardNum.value = v.slice(0, 19);
+  });
+}
+// Card expiry format
+const cardExp = document.getElementById('card-expiry');
+if (cardExp) {
+  cardExp.addEventListener('input', () => {
+    let v = cardExp.value.replace(/\D/g,'');
+    if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2,4);
+    cardExp.value = v;
+  });
+}
+
+// ── Frete por CEP ─────────────────────────────────────────────
+const FRETE_TABLE = {
+  SP: { pac: 12.90, sedex: 22.90, pacDias: '3 a 5 dias úteis',   sedexDias: '1 a 2 dias úteis' },
+  RJ: { pac: 15.90, sedex: 26.90, pacDias: '4 a 6 dias úteis',   sedexDias: '1 a 2 dias úteis' },
+  MG: { pac: 14.90, sedex: 24.90, pacDias: '4 a 6 dias úteis',   sedexDias: '1 a 2 dias úteis' },
+  ES: { pac: 16.90, sedex: 28.90, pacDias: '5 a 7 dias úteis',   sedexDias: '2 a 3 dias úteis' },
+  PR: { pac: 16.90, sedex: 27.90, pacDias: '4 a 6 dias úteis',   sedexDias: '2 dias úteis'     },
+  SC: { pac: 17.90, sedex: 29.90, pacDias: '5 a 7 dias úteis',   sedexDias: '2 a 3 dias úteis' },
+  RS: { pac: 19.90, sedex: 32.90, pacDias: '6 a 8 dias úteis',   sedexDias: '2 a 3 dias úteis' },
+  MS: { pac: 18.90, sedex: 30.90, pacDias: '5 a 7 dias úteis',   sedexDias: '2 a 3 dias úteis' },
+  MT: { pac: 20.90, sedex: 34.90, pacDias: '7 a 9 dias úteis',   sedexDias: '3 dias úteis'     },
+  GO: { pac: 18.90, sedex: 30.90, pacDias: '5 a 7 dias úteis',   sedexDias: '2 a 3 dias úteis' },
+  DF: { pac: 19.90, sedex: 31.90, pacDias: '5 a 7 dias úteis',   sedexDias: '2 a 3 dias úteis' },
+  BA: { pac: 20.90, sedex: 33.90, pacDias: '6 a 8 dias úteis',   sedexDias: '3 dias úteis'     },
+  SE: { pac: 21.90, sedex: 35.90, pacDias: '7 a 9 dias úteis',   sedexDias: '3 a 4 dias úteis' },
+  AL: { pac: 22.90, sedex: 36.90, pacDias: '7 a 9 dias úteis',   sedexDias: '3 a 4 dias úteis' },
+  PE: { pac: 22.90, sedex: 36.90, pacDias: '7 a 9 dias úteis',   sedexDias: '3 a 4 dias úteis' },
+  PB: { pac: 23.90, sedex: 37.90, pacDias: '8 a 10 dias úteis',  sedexDias: '4 dias úteis'     },
+  RN: { pac: 23.90, sedex: 37.90, pacDias: '8 a 10 dias úteis',  sedexDias: '4 dias úteis'     },
+  CE: { pac: 23.90, sedex: 37.90, pacDias: '8 a 10 dias úteis',  sedexDias: '4 dias úteis'     },
+  PI: { pac: 24.90, sedex: 38.90, pacDias: '9 a 11 dias úteis',  sedexDias: '4 a 5 dias úteis' },
+  MA: { pac: 24.90, sedex: 38.90, pacDias: '9 a 11 dias úteis',  sedexDias: '4 a 5 dias úteis' },
+  PA: { pac: 26.90, sedex: 42.90, pacDias: '10 a 12 dias úteis', sedexDias: '5 dias úteis'     },
+  AP: { pac: 28.90, sedex: 45.90, pacDias: '12 a 15 dias úteis', sedexDias: '5 a 7 dias úteis' },
+  AM: { pac: 28.90, sedex: 45.90, pacDias: '12 a 15 dias úteis', sedexDias: '5 a 7 dias úteis' },
+  RR: { pac: 29.90, sedex: 47.90, pacDias: '14 a 18 dias úteis', sedexDias: '6 a 8 dias úteis' },
+  RO: { pac: 27.90, sedex: 43.90, pacDias: '11 a 14 dias úteis', sedexDias: '5 a 6 dias úteis' },
+  AC: { pac: 29.90, sedex: 47.90, pacDias: '14 a 18 dias úteis', sedexDias: '6 a 8 dias úteis' },
+  TO: { pac: 25.90, sedex: 40.90, pacDias: '9 a 11 dias úteis',  sedexDias: '4 a 5 dias úteis' },
+};
+const FRETE_DEFAULT = { pac: 24.90, sedex: 38.90, pacDias: '8 a 12 dias úteis', sedexDias: '4 a 5 dias úteis' };
+
+let freteAtual = 0;
+let freteTabela = null;
+let selectedFrete = 'pac';
+const STORE_PICKUP_ADDRESS = 'R. Maria Judite Gentil, 9 Brodowski - SP';
+let cepDebounce = null;
+
+function inferUFfromCEP(cep) {
+  const raw = String(cep || '').replace(/\D/g, '');
+  const prefix = parseInt(raw.slice(0, 2), 10);
+  if (Number.isNaN(prefix)) return '';
+  if (prefix >= 1 && prefix <= 19) return 'SP';
+  if (prefix >= 20 && prefix <= 28) return 'RJ';
+  if (prefix >= 30 && prefix <= 39) return 'MG';
+  if (prefix >= 29 && prefix <= 29) return 'ES';
+  if (prefix >= 80 && prefix <= 87) return 'PR';
+  if (prefix >= 88 && prefix <= 89) return 'SC';
+  if (prefix >= 90 && prefix <= 99) return 'RS';
+  if (prefix >= 70 && prefix <= 72) return 'DF';
+  if (prefix >= 73 && prefix <= 76) return 'GO';
+  if (prefix >= 77 && prefix <= 77) return 'TO';
+  return '';
+}
+
+function fmtBRL(v) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function generatePixIdentifier(orderId, total) {
+  // Gera uma chave Pix aleatória única para cada transação
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  const orderSuffix = orderId.replace(/[^0-9]/g, '').slice(-4);
+  const amountHash = btoa(total.toString()).substring(0, 6).toUpperCase();
+
+  // Formato: PIX-{TIMESTAMP}-{RANDOM}-{ORDER}-{AMOUNT}
+  return `PIX-${timestamp}-${random}-${orderSuffix}-${amountHash}`;
+}
+
+function generatePixCopyPasteKey(orderId, total) {
+  // Retorna a chave Pix real para copiar e colar
+  return PAYMENT_DATA.pix.key;
+}
+
+function atualizarResumoFrete() {
+  const shippingEl = document.getElementById('order-shipping');
+  const grandEl    = document.getElementById('order-grand-total');
+  const subtotalEl = document.getElementById('order-total');
+
+  // Pega subtotal do texto já renderizado pelo initCheckout()
+  const subtotalText = subtotalEl ? subtotalEl.textContent.replace(/[^\d,]/g,'').replace(',','.') : '0';
+  const subtotal = parseFloat(subtotalText) || 0;
+  const effectiveShipping = subtotal > 0 ? freteAtual : 0;
+
+  if (shippingEl) {
+    if (selectedFrete === 'retirar') {
+      shippingEl.textContent = 'R$ 0,00';
+      shippingEl.style.color = 'inherit';
+    } else {
+      shippingEl.textContent = subtotal <= 0 ? 'Informe o carrinho' : (effectiveShipping > 0 ? fmtBRL(effectiveShipping) : 'Informe o CEP');
+      shippingEl.style.color = effectiveShipping > 0 ? 'inherit' : 'var(--gray-400)';
+    }
+  }
+  if (grandEl) grandEl.textContent = fmtBRL(subtotal + effectiveShipping);
+
+  // Salva nos hidden inputs para o submit usar
+  document.getElementById('frete-valor').value = effectiveShipping;
+  document.getElementById('frete-tipo').value  = selectedFrete;
+}
+
+function exibirFrete(uf) {
+  const t = FRETE_TABLE[uf] || FRETE_DEFAULT;
+  freteTabela = t;
+
+  document.getElementById('pac-price').textContent  = fmtBRL(t.pac);
+  document.getElementById('pac-eta').textContent    = 'Estimativa: ' + t.pacDias;
+  document.getElementById('sedex-price').textContent = fmtBRL(t.sedex);
+  document.getElementById('sedex-eta').textContent  = 'Estimativa: ' + t.sedexDias;
+
+  if (selectedFrete === 'retirar') {
+    freteAtual = 0;
+    document.querySelector('input[name=frete][value=retirar]').checked = true;
+    document.getElementById('opt-retirar').classList.add('selected');
+    document.getElementById('opt-pac').classList.remove('selected');
+    document.getElementById('opt-sedex').classList.remove('selected');
+  } else {
+    // Reseta para PAC por padrão quando não é retirada
+    selectedFrete = 'pac';
+    freteAtual    = t.pac;
+    document.querySelector('input[name=frete][value=pac]').checked = true;
+    document.getElementById('opt-pac').classList.add('selected');
+    document.getElementById('opt-sedex').classList.remove('selected');
+    document.getElementById('opt-retirar').classList.remove('selected');
+  }
+
+  document.getElementById('frete-card').classList.add('show');
+  document.getElementById('pickup-info').style.display = selectedFrete === 'retirar' ? 'block' : 'none';
+  atualizarResumoFrete();
+
+  // Listeners de seleção por input
+  document.querySelectorAll('input[name=frete]').forEach(r => {
+    r.onchange = () => {
+      selectedFrete = r.value;
+      if (selectedFrete === 'pac') {
+        freteAtual = t.pac;
+      } else if (selectedFrete === 'sedex') {
+        freteAtual = t.sedex;
+      } else {
+        freteAtual = 0;
+      }
+      document.getElementById('opt-pac').classList.toggle('selected',   selectedFrete === 'pac');
+      document.getElementById('opt-sedex').classList.toggle('selected', selectedFrete === 'sedex');
+      document.getElementById('opt-retirar').classList.toggle('selected', selectedFrete === 'retirar');
+      document.getElementById('pickup-info').style.display = selectedFrete === 'retirar' ? 'block' : 'none';
+      atualizarResumoFrete();
+      if (selectedFrete === 'retirar') {
+        document.getElementById('endereco').value = STORE_PICKUP_ADDRESS;
+        document.getElementById('cidade').value = 'Brodowski';
+        document.getElementById('estado').value = 'SP';
+      }
+    };
+  });
+
+  // Permite clicar no cartão inteiro da opção de frete
+  document.querySelectorAll('.frete-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const radio = option.querySelector('input[name="frete"]');
+      if (!radio) return;
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+}
+
+async function buscarCEP(cep) {
+  const spinner  = document.getElementById('cep-spinner');
+  const okIcon   = document.getElementById('cep-ok');
+  const errMsg   = document.getElementById('cep-error');
+
+  spinner.classList.add('active');
+  okIcon.classList.remove('show');
+  errMsg.classList.remove('show');
+  document.getElementById('frete-card').classList.remove('show');
+  freteAtual = 0;
+  atualizarResumoFrete();
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const res  = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error('Falha ao consultar CEP');
+    const data = await res.json();
+    if (data.erro) throw new Error('CEP inválido');
+
+    // Preenche campos automaticamente
+    document.getElementById('cidade').value = data.localidade || '';
+    document.getElementById('estado').value = data.uf || '';
+    // Preenche endereço só se vazio ou se não for retirada
+    if (data.logradouro && !document.getElementById('endereco').value.trim()) {
+      document.getElementById('endereco').value =
+        data.logradouro + (data.complemento ? ', ' + data.complemento : '');
+    }
+
+    spinner.classList.remove('active');
+    okIcon.classList.add('show');
+    exibirFrete(data.uf);
+  } catch {
+    const fallbackUF = inferUFfromCEP(cep);
+    if (fallbackUF) {
+      document.getElementById('estado').value = fallbackUF;
+      spinner.classList.remove('active');
+      okIcon.classList.add('show');
+      errMsg.classList.remove('show');
+      exibirFrete(fallbackUF);
+      return;
+    }
+    spinner.classList.remove('active');
+    document.getElementById('cidade').value = '';
+    document.getElementById('estado').value = '';
+    document.getElementById('pac-eta').textContent = 'Não foi possível calcular agora';
+    document.getElementById('sedex-eta').textContent = 'Não foi possível calcular agora';
+    document.getElementById('pac-price').textContent = '—';
+    document.getElementById('sedex-price').textContent = '—';
+    errMsg.classList.add('show');
+    atualizarResumoFrete();
+  }
+}
+
+// ── CEP input: máscara + debounce ─────────────────────────────
+document.getElementById('cep').addEventListener('input', function () {
+  let v = this.value.replace(/\D/g, '');
+  if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5, 8);
+  this.value = v;
+
+  document.getElementById('cep-ok').classList.remove('show');
+  document.getElementById('cep-error').classList.remove('show');
+
+  clearTimeout(cepDebounce);
+  const raw = v.replace('-', '');
+  if (raw.length === 8) {
+    cepDebounce = setTimeout(() => buscarCEP(raw), 600);
+  }
+});
+
+// ── Redirect after success modal ──────────────────────────────
+document.getElementById('go-home')?.addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+
+// ── FORM VALIDATION AND SUBMISSION ────────────────────────────
+document.getElementById('checkout-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  // Validar campos obrigatórios
+  const nome = document.getElementById('nome').value.trim();
+  const endereco = document.getElementById('endereco').value.trim();
+  const cidade = document.getElementById('cidade').value.trim();
+  const cep = document.getElementById('cep').value.trim();
+  const paymentMethod = document.getElementById('payment-method').value;
+
+  let isValid = true;
+
+  // Limpar erros anteriores
+  document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+
+  // Validações
+  if (!nome) {
+    document.getElementById('nome-error').textContent = 'Nome obrigatório';
+    isValid = false;
+  }
+  const isPickup = selectedFrete === 'retirar';
+  if (!isPickup && !endereco) {
+    document.getElementById('endereco-error').textContent = 'Endereço obrigatório';
+    isValid = false;
+  }
+  if (!isPickup && !cidade) {
+    document.getElementById('cidade-error').textContent = 'Cidade obrigatória';
+    isValid = false;
+  }
+  if (!isPickup && (!cep || cep.length < 8)) {
+    document.getElementById('cep-error').textContent = 'CEP inválido';
+    isValid = false;
+  }
+  if (!paymentMethod) {
+    alert('Selecione uma forma de pagamento');
+    isValid = false;
+  }
+
+  // Validação de cartão se selecionado
+  if (paymentMethod === 'cartao') {
+    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+    const cardExpiry = document.getElementById('card-expiry').value;
+    const cardCvv = document.getElementById('card-cvv').value;
+    
+    if (!cardNumber || cardNumber.length < 13) {
+      alert('Número do cartão inválido');
+      isValid = false;
+    }
+    if (!cardExpiry || cardExpiry.length < 5) {
+      alert('Validade do cartão inválida');
+      isValid = false;
+    }
+    if (!cardCvv || cardCvv.length < 3) {
+      alert('CVV inválido');
+      isValid = false;
+    }
+  }
+
+  if (!isValid) return;
+
+  // Criar objeto do pedido
+  const orderId = 'PED-' + Date.now();
+  const subtotal = parseFloat(document.getElementById('order-total').textContent.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+  const shippingCost = freteAtual || 0;
+  const total = subtotal + shippingCost;
+
+  // Pegar itens do carrinho
+  const cartItems = JSON.parse(localStorage.getItem('lkmodas_cart') || '[]');
+
+  const orderData = {
+    id: orderId,
+    // Campos diretos (usados pelo admin e e-mail)
+    nome: nome,
+    email: document.getElementById('email').value.trim() || '',
+    telefone: document.getElementById('telefone').value.trim() || '',
+    endereco: selectedFrete === 'retirar' ? STORE_PICKUP_ADDRESS : endereco,
+    cidade: selectedFrete === 'retirar' ? 'Brodowski' : cidade,
+    estado: selectedFrete === 'retirar' ? 'SP' : document.getElementById('estado').value,
+    cep: selectedFrete === 'retirar' ? '' : cep,
+    // Estrutura delivery (compatibilidade com o admin)
+    delivery: {
+      nome: nome,
+      endereco: selectedFrete === 'retirar' ? STORE_PICKUP_ADDRESS : endereco,
+      cidade: selectedFrete === 'retirar' ? 'Brodowski' : cidade,
+      estado: selectedFrete === 'retirar' ? 'SP' : document.getElementById('estado').value,
+      cep: selectedFrete === 'retirar' ? '' : cep,
+    },
+    userEmail: document.getElementById('email').value.trim() || '',
+    // Pagamento
+    paymentMethod: paymentMethod,
+    payment: paymentMethod,
+    status: 'pending',
+    // Valores
+    subtotal: subtotal,
+    shippingCost: shippingCost,
+    total: total,
+    shippingType: selectedFrete || 'pac',
+    // Itens do carrinho — obrigatório para exibir no admin
+    items: cartItems,
+    // Datas
+    date: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    // Pix
+    pixIdentifier: paymentMethod === 'pix' ? generatePixIdentifier(orderId, total) : '',
+    pixCopyPasteKey: paymentMethod === 'pix' ? generatePixCopyPasteKey(orderId, total) : '',
+    // Cartão
+    cardLast4: paymentMethod === 'cartao' ? document.getElementById('card-number').value.slice(-4) : '',
+    installments: paymentMethod === 'cartao' ? document.getElementById('installments').value : ''
+  };
+
+  sessionStorage.setItem('currentOrder', JSON.stringify(orderData));
+  localStorage.removeItem('lkmodas_cart');
+
+  // Salvar no Firebase (nuvem)
+  if (window.FB) {
+    window.FB.saveOrder(orderData).catch(err => console.error('Firebase order save:', err));
+  }
+
+  // Redirecionar para página de confirmação de pagamento
+  // Envia e-mails em background (não bloqueia o redirect)
+  if (typeof notificarNovoPedido === 'function') {
+    try {
+      await Promise.race([
+        notificarNovoPedido(orderData),
+        new Promise(resolve => setTimeout(resolve, 2500))
+      ]);
+    } catch (err) {
+      console.error('EmailJS novo pedido:', err);
+    }
+  }
+  window.location.href = 'payment-confirmation.html?order=' + encodeURIComponent(orderId);
+});
+</script>
+</body>
+</html>

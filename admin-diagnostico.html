@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnóstico de Produtos — Admin LK Moda</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .diag-container { max-width: 900px; margin: 40px auto; padding: 20px; }
+    .diag-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .diag-section h3 { margin-top: 0; color: #333; }
+    .code-block { background: #222; color: #0f0; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; overflow-x: auto; }
+    .success { color: #22c55e; }
+    .error { color: #ef4444; }
+    .warning { color: #eab308; }
+    .info { color: #3b82f6; }
+    button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: #c41e3a; color: white; }
+    .btn-primary:hover { background: #a01830; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #333; color: white; }
+  </style>
+</head>
+<body>
+  <div class="diag-container">
+    <h1>🔍 Diagnóstico de Sistema de Produtos</h1>
+    
+    <div class="diag-section">
+      <h3>✅ Status do Sistema</h3>
+      <div id="status-firebase" class="diag-line"></div>
+      <div id="status-local" class="diag-line"></div>
+      <div id="status-site" class="diag-line"></div>
+    </div>
+
+    <div class="diag-section">
+      <h3>📦 Produtos Armazenados</h3>
+      <button class="btn-primary" onclick="checkProductsStatus()">🔍 Verificar Status</button>
+      <div id="products-status" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="diag-section">
+      <h3>🔧 Testes de Sincronização</h3>
+      <button class="btn-primary" onclick="testAddProduct()">➕ Adicionar Produto Teste</button>
+      <button class="btn-primary" onclick="testSyncToSite()">🔄 Sincronizar para Site</button>
+      <button class="btn-primary" onclick="testClearAll()">🗑️ Limpar Tudo (CUIDADO!)</button>
+      <div id="test-result" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="diag-section">
+      <h3>📋 Checklist de Diagnóstico</h3>
+      <ol>
+        <li>✅ Firebase está carregando? (verificar abaixo)</li>
+        <li>✅ Produtos estão sendo salvos no localStorage?</li>
+        <li>✅ O site consegue sincronizar?</li>
+        <li>✅ Produtos aparecem em index.html?</li>
+        <li>✅ Produtos aparecem em produtos.html?</li>
+      </ol>
+    </div>
+
+    <div class="diag-section">
+      <h3>🚀 Para Resolver o Problema</h3>
+      <ol>
+        <li><strong>Se Firebase está offline:</strong> Produtos serão salvos localmente e sincronizarão quando online</li>
+        <li><strong>Se produtos não aparecem no site:</strong>
+          <ul>
+            <li>Clique em "Sincronizar para Site" acima</li>
+            <li>Recarregue a página (F5)</li>
+            <li>Limpe o cache do navegador (Ctrl+Shift+Delete)</li>
+          </ul>
+        </li>
+        <li><strong>Se ainda não funciona:</strong>
+          <ul>
+            <li>Abra console (F12 → Console)</li>
+            <li>Procure por mensagens de erro vermelho</li>
+            <li>Tire um print screen e compartilhe com suporte</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Scripts necessários -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="firebase-lkmodas.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    function log(msg, type = 'info') {
+      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      const colors = { success: '#22c55e', error: '#ef4444', warning: '#eab308', info: '#3b82f6' };
+      console.log(`%c${icons[type]} ${msg}`, `color: ${colors[type]}; font-weight: bold`);
+    }
+
+    function checkProductsStatus() {
+      const result = document.getElementById('products-status');
+      let html = '<div style="font-family: monospace; font-size: 0.85rem; line-height: 1.6;">';
+      
+      // Verificar Firebase
+      if (window.FB) {
+        html += '<div class="success">✅ Firebase carregado</div>';
+      } else {
+        html += '<div class="error">❌ Firebase não carregado</div>';
+      }
+      
+      // Verificar localStorage
+      try {
+        const localProducts = sessionStorage.getItem('lkmodas_products');
+        if (localProducts) {
+          const parsed = JSON.parse(localProducts);
+          const count = Array.isArray(parsed) ? parsed.length : 0;
+          html += `<div class="info">📦 ${count} produtos no localStorage</div>`;
+          if (count > 0) {
+            html += '<table style="margin-top: 10px; font-size: 0.8rem;">';
+            html += '<tr><th>ID</th><th>Nome</th><th>Preço</th><th>Status</th></tr>';
+            parsed.slice(0, 5).forEach(p => {
+              html += `<tr><td>${p.id}</td><td>${p.name || 'N/A'}</td><td>R$ ${p.price || '0'}</td><td>local</td></tr>`;
+            });
+            if (parsed.length > 5) {
+              html += `<tr><td colspan="4" style="text-align: center">... e mais ${parsed.length - 5} produtos</td></tr>`;
+            }
+            html += '</table>';
+          }
+        } else {
+          html += '<div class="warning">⚠️ Nenhum produto no localStorage</div>';
+        }
+      } catch (e) {
+        html += `<div class="error">❌ Erro ao ler localStorage: ${e.message}</div>`;
+      }
+      
+      // Verificar cache em memória
+      if (window.__LK_PRODUCTS_CACHE) {
+        const count = Array.isArray(window.__LK_PRODUCTS_CACHE) ? window.__LK_PRODUCTS_CACHE.length : 0;
+        html += `<div class="info">📦 ${count} produtos em memória (cache)</div>`;
+      }
+      
+      html += '</div>';
+      result.innerHTML = html;
+    }
+
+    async function testAddProduct() {
+      const result = document.getElementById('test-result');
+      result.innerHTML = '<div class="info">⏳ Testando adição de produto...</div>';
+      
+      try {
+        if (!window.FB?.saveProduct) {
+          result.innerHTML = '<div class="error">❌ Firebase não disponível</div>';
+          return;
+        }
+        
+        const testProduct = {
+          id: `test-${Date.now()}`,
+          name: `Produto Teste ${new Date().toLocaleTimeString('pt-BR')}`,
+          price: 99.99,
+          stock: 5,
+          category: 'masculino',
+          img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+        };
+        
+        const result_resp = await window.FB.saveProduct(testProduct);
+        
+        if (result_resp?.ok) {
+          result.innerHTML = `<div class="success">✅ Produto teste adicionado!<br>ID: ${testProduct.id}</div>`;
+          log(`Produto teste adicionado: ${testProduct.name}`, 'success');
+          setTimeout(checkProductsStatus, 500);
+        } else {
+          result.innerHTML = '<div class="error">❌ Falha ao adicionar produto</div>';
+        }
+      } catch (e) {
+        result.innerHTML = `<div class="error">❌ Erro: ${e.message}</div>`;
+        log(`Erro: ${e.message}`, 'error');
+      }
+    }
+
+    async function testSyncToSite() {
+      const result = document.getElementById('test-result');
+      result.innerHTML = '<div class="info">⏳ Sincronizando...</div>';
+      
+      try {
+        if (Products?.syncFromFirebase) {
+          await Products.syncFromFirebase();
+          result.innerHTML = '<div class="success">✅ Sincronização concluída!<br>Recarregue o site para ver os produtos.</div>';
+          log('Sincronização completa', 'success');
+        } else {
+          result.innerHTML = '<div class="error">❌ Função de sincronização não disponível</div>';
+        }
+      } catch (e) {
+        result.innerHTML = `<div class="error">❌ Erro: ${e.message}</div>`;
+        log(`Erro na sincronização: ${e.message}`, 'error');
+      }
+    }
+
+    function testClearAll() {
+      if (!confirm('⚠️ ATENÇÃO! Isto vai limpar TODOS os produtos localmente!\n\nDeseja continuar?')) {
+        return;
+      }
+      
+      try {
+        sessionStorage.removeItem('lkmodas_products');
+        window.__LK_PRODUCTS_CACHE = [];
+        document.getElementById('test-result').innerHTML = '<div class="warning">⚠️ Dados locais limpos!</div>';
+        log('Dados locais limpos', 'warning');
+        setTimeout(checkProductsStatus, 500);
+      } catch (e) {
+        document.getElementById('test-result').innerHTML = `<div class="error">❌ Erro: ${e.message}</div>`;
+      }
+    }
+
+    // Verificação automática ao carregar
+    window.addEventListener('load', () => {
+      log('Página de diagnóstico carregada', 'info');
+      setTimeout(checkProductsStatus, 1000);
+    });
+  </script>
+</body>
+</html>
