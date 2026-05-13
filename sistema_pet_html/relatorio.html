@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Relatório</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <h2>📊 Relatórios</h2>
+  <a href="caixa.html">Voltar</a>
+</div>
+
+<div class="container">
+
+  <h3>Hoje</h3>
+  <div class="total">R$ <span id="total-dia">0.00</span></div>
+
+  <div class="lista" id="lista-hoje"></div>
+
+  <button onclick="finalizarExpediente()">Finalizar Expediente</button>
+
+  <h3 style="margin-top:20px;">Histórico</h3>
+  <div class="lista" id="historico"></div>
+
+  <canvas id="grafico" height="100"></canvas>
+
+</div>
+
+<script>
+let vendas = JSON.parse(localStorage.getItem("vendas")) || [];
+let historico = JSON.parse(localStorage.getItem("historico")) || [];
+
+let hoje = new Date().toLocaleDateString();
+
+/* ===== HOJE ===== */
+let totalDia = 0;
+let listaHoje = document.getElementById("lista-hoje");
+
+vendas
+  .filter(v => v.data === hoje)
+  .forEach(v => {
+    totalDia += v.total;
+
+    let div = document.createElement("div");
+    div.className = "item";
+    div.textContent = `${v.itens.length} itens - R$ ${v.total.toFixed(2)}`;
+    listaHoje.appendChild(div);
+  });
+
+document.getElementById("total-dia").textContent = totalDia.toFixed(2);
+
+/* ===== FINALIZAR EXPEDIENTE ===== */
+function finalizarExpediente(){
+  if(!confirm("Finalizar expediente?")) return;
+
+  historico.push({
+    data: hoje,
+    total: totalDia
+  });
+
+  localStorage.setItem("historico", JSON.stringify(historico));
+
+  vendas = vendas.filter(v => v.data !== hoje);
+  localStorage.setItem("vendas", JSON.stringify(vendas));
+
+  location.reload();
+}
+
+/* ===== HISTÓRICO ===== */
+let listaHist = document.getElementById("historico");
+
+historico.forEach(h => {
+  let div = document.createElement("div");
+  div.className = "item";
+  div.textContent = `${h.data} - R$ ${h.total.toFixed(2)}`;
+  listaHist.appendChild(div);
+});
+
+/* ===== GRÁFICO ===== */
+let labels = historico.map(h => h.data);
+let dados = historico.map(h => h.total);
+
+new Chart(document.getElementById("grafico"), {
+  type: "bar",
+  data: {
+    labels: labels,
+    datasets: [{
+      label: "Faturamento",
+      data: dados
+    }]
+  }
+});
+</script>
+
+</body>
+</html>

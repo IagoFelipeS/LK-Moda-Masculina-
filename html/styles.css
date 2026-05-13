@@ -1,0 +1,84 @@
+body {
+    background: #141414;
+    color: #fff;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 40px 0 20px 0;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 0; 
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+
+.profiles {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profiles ul {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(20,20,20,0.7);
+    border-radius: 8px;
+    padding: 20px 30px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    cursor: pointer;
+}
+
+.profile:hover {
+    transform: scale(1.08);
+    
+    background: rgba(229,9,20,0.15);
+}
+
+.profile img {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 3px solid transparent;
+    margin-bottom: 12px;
+    transition: border 0.2s;
+}
+
+.profile:hover img {
+    border: 3px solid #e50914;
+}
+img:hover {
+    border: 3px solid #e50914;
+}
+
+figcaption {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-top: 6px;
+    color: #fff;
+    text-shadow: 0 1px 2px #000;
+}

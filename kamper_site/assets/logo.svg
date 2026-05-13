@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="58" fill="#0a0a0a" stroke="#d4af37" stroke-width="2"/>
+  <!-- LK letters -->
+  <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle"
+        font-family="Georgia, serif" font-size="42" font-weight="900"
+        fill="#d4af37" letter-spacing="-2">LK</text>
+  <!-- Subtitle bar -->
+  <rect x="20" y="74" width="80" height="2" fill="#d4af37" opacity="0.6"/>
+  <!-- Subtitle text -->
+  <text x="50%" y="86%" dominant-baseline="middle" text-anchor="middle"
+        font-family="Georgia, serif" font-size="8" font-weight="400"
+        fill="#d4af37" letter-spacing="3">MODAS</text>
+</svg>

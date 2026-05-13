@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Cadastro</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <h2>📦 Cadastro</h2>
+  <div>
+    <a href="caixa.html">Caixa</a>
+    <a href="relatorio.html">Relatório</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <input id="cod" placeholder="Código">
+  <input id="nome" placeholder="Nome">
+  <input id="preco" type="number" placeholder="Preço">
+  
+  <button onclick="cadastrar()">Cadastrar</button>
+
+  <div class="lista" id="produtos"></div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+const codInput = document.getElementById("cod");
+const nomeInput = document.getElementById("nome");
+const precoInput = document.getElementById("preco");
+const produtosDiv = document.getElementById("produtos");
+
+renderProdutos();
+</script>
+
+</body>
+</html>

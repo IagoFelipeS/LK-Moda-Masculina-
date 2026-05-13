@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Admin overrides: crimson is red here for danger/alert contexts */
+    :root { --crimson: #c41e3a; --crimson-dark: #a01830; }
+    .admin-login {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: var(--black);
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(196,30,58,.12) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(201,168,76,.07) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,.015) 0px, rgba(255,255,255,.015) 1px, transparent 1px, transparent 60px);
+    }
+    .admin-login-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 48px; width: 100%; max-width: 420px;
+      box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    }
+    .admin-login-logo { text-align: center; margin-bottom: 36px; }
+    .admin-login-logo h1 { font-family: var(--font-display); font-size: 2.2rem; font-weight: 900; }
+    .admin-login-logo h1 span { color: var(--crimson); }
+    .admin-login-logo p { font-size: .75rem; color: var(--gray-400); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+    .security-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--gray-100); border-radius: var(--radius);
+      padding: 10px 14px; margin-bottom: 20px; font-size: .78rem; color: var(--gray-600);
+      border-left: 3px solid var(--gold);
+    }
+    .lock-warning {
+      background: #fff5f5; border: 1px solid #fecaca; border-radius: var(--radius);
+      padding: 12px 14px; margin-bottom: 16px; font-size: .82rem; color: #991b1b;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .attempts-bar { display: flex; gap: 4px; margin-bottom: 18px; }
+    .attempt-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gray-200); transition: background .3s; }
+    .attempt-dot.used { background: var(--crimson); }
+    .twofa-section { display: none; }
+    .twofa-code-wrap { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+    .twofa-digit {
+      width: 48px; height: 56px; border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      text-align: center; font-size: 1.4rem; font-weight: 700; outline: none;
+      transition: border-color var(--transition);
+    }
+    .twofa-digit:focus { border-color: var(--black); }
+
+    /* Sidebar */
+    .admin-sidebar {
+      background: var(--black); color: var(--white); padding: 0;
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-top { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .admin-logo { font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; }
+    .admin-logo span { color: var(--crimson); }
+    .admin-logo-sub { font-size: .7rem; color: var(--gold); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-section { padding: 16px 16px 0; }
+    .sidebar-section-label { font-size: .65rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.25); padding: 0 8px; margin-bottom: 6px; }
+    .admin-nav { display: flex; flex-direction: column; gap: 2px; }
+    .admin-nav a {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius);
+      font-size: .84rem; font-weight: 500; color: rgba(255,255,255,.55);
+      transition: all var(--transition); cursor: pointer; text-decoration: none;
+    }
+    .admin-nav a:hover { background: rgba(255,255,255,.06); color: var(--white); }
+    .admin-nav a.active { background: rgba(255,255,255,.1); color: var(--white); }
+    .admin-nav a .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .admin-nav a .nav-badge {
+      margin-left: auto; background: var(--crimson); color: var(--white);
+      font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+    }
+    .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,.06); }
+    .session-timer { display: flex; align-items: center; gap: 8px; font-size: .75rem; color: rgba(255,255,255,.4); }
+    .session-bar { width: 80px; height: 3px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+    .session-bar-fill { height: 100%; background: var(--gold); transition: width 1s linear; }
+    .session-bar-fill.warn { background: var(--crimson); }
+    .admin-user-info { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 4px; }
+    .admin-avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: var(--crimson); color: var(--white);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; flex-shrink: 0;
+    }
+    .admin-user-name { font-size: .84rem; font-weight: 600; color: var(--white); }
+    .admin-user-role { font-size: .72rem; color: var(--gold); }
+
+    /* Main */
+    .admin-main { background: var(--gray-100); min-height: 100vh; }
+    .admin-topbar {
+      background: var(--white); border-bottom: 1px solid var(--gray-200);
+      padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .admin-page-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
+    .admin-content { padding: 32px 40px; }
+
+    /* Panels */
+    .admin-panel { display: none; }
+    .admin-panel.visible { display: block; }
+
+    /* Stats */
+    .admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--white); border-radius: var(--radius); padding: 20px 22px;
+      border: 1px solid var(--gray-200); position: relative; overflow: hidden;
+      transition: box-shadow var(--transition);
+    }
+    .stat-card:hover { box-shadow: var(--shadow-md); }
+    .stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+    .stat-card.c1::after { background: var(--crimson); }
+    .stat-card.c2::after { background: #3b82f6; }
+    .stat-card.c3::after { background: #22c55e; }
+    .stat-card.c4::after { background: var(--gold); }
+    .stat-icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .stat-val { font-size: 2rem; font-weight: 700; font-family: var(--font-display); line-height: 1; }
+    .stat-label { font-size: .75rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+
+    /* Admin card */
+    .admin-card { background: var(--white); border-radius: var(--radius); padding: 28px 32px; border: 1px solid var(--gray-200); margin-bottom: 24px; }
+    .admin-card-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin-bottom: 22px; padding-bottom: 12px; border-bottom: 2px solid var(--black); display: flex; align-items: center; gap: 10px; }
+
+    /* Form grid */
+    .admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    select.form-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px;
+    }
+
+    /* Table */
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table th { text-align: left; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); padding: 10px 14px; border-bottom: 2px solid var(--gray-200); white-space: nowrap; }
+    .admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--gray-200); font-size: .85rem; vertical-align: middle; }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: #fafafa; }
+    .admin-table .thumb { width: 40px; aspect-ratio: 3/4; object-fit: cover; border-radius: 2px; background: var(--gray-100); }
+    .table-actions { display: flex; gap: 6px; }
+    .tbl-btn { padding: 5px 12px; border-radius: var(--radius); font-size: .72rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; transition: all var(--transition); cursor: pointer; }
+    .tbl-btn-edit { border: 1.5px solid var(--black); color: var(--black); background: none; }
+    .tbl-btn-edit:hover { background: var(--black); color: var(--white); }
+    .tbl-btn-del { border: 1.5px solid var(--crimson); color: var(--crimson); background: none; }
+    .tbl-btn-del:hover { background: var(--crimson); color: var(--white); }
+    .tbl-btn-view { border: 1.5px solid #3b82f6; color: #3b82f6; background: none; }
+    .tbl-btn-view:hover { background: #3b82f6; color: var(--white); }
+
+    /* Status select */
+    .status-select { padding: 4px 10px; border-radius: 24px; border: none; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; outline: none; }
+    .status-select.pending    { background: rgba(201,168,76,.15); color: #92600a; }
+    .status-select.approved   { background: rgba(34,197,94,.15); color: #15803d; }
+    .status-select.shipped    { background: rgba(14,165,233,.15); color: #0369a1; }
+    .status-select.delivered  { background: rgba(34,197,94,.15); color: #15803d; }
+    .status-select.rejected   { background: rgba(196,30,58,.15); color: var(--crimson); }
+
+    .order-stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+    .order-stat-card {
+      background:#fafafa; border:1px solid var(--gray-200); border-radius:10px;
+      padding:16px 18px;
+    }
+    .order-stat-card .num { font-family:var(--font-display); font-size:1.55rem; font-weight:700; line-height:1; }
+    .order-stat-card .lbl { font-size:.74rem; color:var(--gray-400); letter-spacing:.06em; text-transform:uppercase; margin-top:6px; }
+    .tbl-btn-approve { border:1.5px solid #15803d; color:#15803d; background:none; }
+    .tbl-btn-approve:hover { background:#15803d; color:var(--white); }
+    .tbl-btn-ship { border:1.5px solid #0369a1; color:#0369a1; background:none; }
+    .tbl-btn-ship:hover { background:#0369a1; color:var(--white); }
+    .tbl-btn-deliver { border:1.5px solid #0a7a36; color:#0a7a36; background:none; }
+    .tbl-btn-deliver:hover { background:#0a7a36; color:var(--white); }
+
+    /* Filter row */
+    .filter-row { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-row .form-input { height: 40px; padding: 0 14px; font-size: .84rem; }
+    .filter-row .form-input:not([type="text"]) { max-width: 180px; }
+    .filter-row input[type="text"] { min-width: 220px; }
+
+    /* Order detail modal */
+    .odm-header { background: var(--black); color: var(--white); padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; }
+    .odm-header h2 { font-family: var(--font-display); font-size: 1.2rem; }
+    .odm-body { padding: 28px; }
+    .odm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .odm-field label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-400); display: block; margin-bottom: 3px; }
+    .odm-field p { font-size: .9rem; font-weight: 600; }
+
+    /* Mini timeline */
+    .mini-step { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 16px; position: relative; }
+    .mini-step:last-child { padding-bottom: 0; }
+    .mini-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; position: relative; z-index: 1; }
+    .mini-dot.done { background: var(--black); }
+    .mini-dot.active { background: var(--crimson); box-shadow: 0 0 0 3px rgba(196,30,58,.2); }
+    .mini-dot.pending { background: var(--gray-200); }
+    .mini-step::before { content: ''; position: absolute; left: 4px; top: 14px; width: 2px; height: calc(100% - 8px); background: var(--gray-200); }
+    .mini-step:last-child::before { display: none; }
+    .mini-step.done::before { background: var(--black); }
+    .mini-step-text { font-size: .82rem; }
+    .mini-step-text strong { display: block; margin-bottom: 1px; }
+    .mini-step-text span { color: var(--gray-400); font-size: .75rem; }
+
+    /* Security log */
+    .security-log { max-height: 280px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: var(--radius); }
+    .log-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid var(--gray-200); font-size: .8rem; }
+    .log-item:last-child { border-bottom: none; }
+    .log-icon { font-size: 1rem; flex-shrink: 0; }
+    .log-time { color: var(--gray-400); font-size: .72rem; margin-top: 2px; }
+    .log-success { border-left: 3px solid #22c55e; }
+    .log-fail    { border-left: 3px solid var(--crimson); }
+    .log-action  { border-left: 3px solid #3b82f6; }
+
+    @media (max-width: 1024px) { .admin-stats { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 860px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .admin-sidebar { display: none; }
+      .admin-content { padding: 20px; }
+      .admin-topbar { padding: 0 20px; }
+      .admin-form-grid { grid-template-columns: 1fr; }
+      .admin-stats { grid-template-columns: 1fr 1fr; }
+      .odm-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .admin-login-card { padding: 32px 22px; }
+      .admin-stats { grid-template-columns: 1fr; }
+      .order-stats-grid { grid-template-columns: 1fr 1fr; }
+      .twofa-digit { width: 40px; height: 48px; font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ════════════════════════ -->
+<div id="admin-login" class="admin-login">
+  <div class="admin-login-card">
+    <div class="admin-login-logo">
+      <h1>LK<span> </span>Moda Masculina</h1>
+      <p>Acesso Restrito · Painel Admin</p>
+    </div>
+
+    <!-- Step 1: Credentials -->
+    <div id="login-step-1">
+      <div class="security-badge">🔒 Conexão segura · Acesso monitorado</div>
+      <div id="lock-warning" class="lock-warning" style="display:none">
+        ⛔ <span id="lock-msg">Aguarde antes de tentar novamente.</span>
+      </div>
+      <div class="attempts-bar" id="attempts-bar">
+        <div class="attempt-dot" id="dot-1"></div>
+        <div class="attempt-dot" id="dot-2"></div>
+        <div class="attempt-dot" id="dot-3"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" type="email" id="admin-email" placeholder="" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input class="form-input" type="password" id="admin-pass" placeholder="••••••••" autocomplete="current-password">
+        <p class="form-error" id="admin-login-error"></p>
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-admin-login" style="margin-top:8px">Continuar →</button>
+    </div>
+
+    <!-- Step 2: 2FA -->
+    <div id="login-step-2" class="twofa-section">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:2.5rem;margin-bottom:8px">📱</div>
+        <h3 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:4px">Verificação em 2 Etapas</h3>
+        <p style="font-size:.82rem;color:var(--gray-600)">Digite o código de 6 dígitos de autenticação.</p>
+        <p style="font-size:.8rem;color:var(--crimson);margin-top:8px;font-weight:700;background:#fff5f5;padding:8px;border-radius:4px" id="demo-code-hint"></p>
+      </div>
+      <div class="twofa-code-wrap" id="twofa-inputs">
+        <input class="twofa-digit" maxlength="1" type="text" inputmode="numeric">
+        <input class="twofa-digit" maxlength="1" type="text" inputmode="numeric">
+        <input class="twofa-digit" maxlength="1" type="text" inputmode="numeric">
+        <input class="twofa-digit" maxlength="1" type="text" inputmode="numeric">
+        <input class="twofa-digit" maxlength="1" type="text" inputmode="numeric">
+        <input class="twofa-digit" maxlength="1" type="text" inputmode="numeric">
+      </div>
+      <p class="form-error" id="twofa-error" style="text-align:center"></p>
+      <button class="btn btn-primary btn-full" id="btn-verify-2fa" style="margin-top:16px">✓ Verificar Código</button>
+      <p style="text-align:center;margin-top:12px;font-size:.78rem;color:var(--gray-400)">
+        <a href="#" id="btn-resend-code" style="color:var(--crimson)">Reenviar código</a>
+      </p>
+    </div>
+
+    <p style="font-size:.75rem;text-align:center;margin-top:20px">
+      <a href="index.html" style="color:var(--crimson)">← Voltar à Loja</a>
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════ DASHBOARD ════════════════════ -->
+<div id="admin-dashboard" class="admin-layout" style="display:none">
+
+  <aside class="admin-sidebar">
+    <div class="sidebar-top">
+      <div class="admin-logo">LK<span> </span>Moda Masculina</div>
+      <div class="admin-logo-sub">Painel Administrativo</div>
+    </div>
+    <div class="sidebar-section" style="padding-top:20px">
+      <div class="sidebar-section-label">Principal</div>
+      <nav class="admin-nav">
+        <a class="active" data-panel="dashboard" onclick="switchPanel('dashboard',this)">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a data-panel="orders" onclick="switchPanel('orders',this)">
+          <span class="nav-icon">🧾</span> Pedidos
+          <span class="nav-badge" id="badge-orders">0</span>
+        </a>
+      </nav>
+    </div>
+    <div class="sidebar-section" style="padding-top:16px">
+      <div class="sidebar-section-label">Catálogo</div>
+      <nav class="admin-nav">
+        <a data-panel="add-product" onclick="switchPanel('add-product',this)">
+          <span class="nav-icon">➕</span> Adicionar Produto
+        </a>
+        <a data-panel="products" onclick="switchPanel('products',this)">
+          <span class="nav-icon">📦</span> Produtos
+        </a>
+      </nav>
+    </div>
+    <div class="sidebar-section" style="padding-top:16px">
+      <div class="sidebar-section-label">Sistema</div>
+      <nav class="admin-nav">
+        <a data-panel="security" onclick="switchPanel('security',this)">
+          <span class="nav-icon">🔐</span> Segurança
+        </a>
+        <a href="index.html"><span class="nav-icon">🏠</span> Ver Loja</a>
+      </nav>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="session-timer" style="margin-bottom:12px;padding:0 8px">
+        <span>⏱</span>
+        <div class="session-bar"><div class="session-bar-fill" id="session-bar-fill"></div></div>
+        <span id="session-countdown">30:00</span>
+      </div>
+      <div class="admin-user-info">
+        <div class="admin-avatar" id="admin-avatar">A</div>
+        <div>
+          <div class="admin-user-name" id="admin-user-name">Admin</div>
+          <div class="admin-user-role">Super Admin</div>
+        </div>
+      </div>
+      <nav class="admin-nav">
+        <a id="admin-logout" href="#" onclick="doLogout(); return false;" style="color:rgba(255,80,80,.7);cursor:pointer">
+          <span class="nav-icon">🚪</span> Sair
+        </a>
+      </nav>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div class="admin-page-title" id="admin-page-title">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="font-size:.75rem;color:var(--gray-400)">Sessão: </span>
+        <span id="session-countdown-top" style="font-size:.78rem;font-weight:600;color:var(--gray-600)">30:00</span>
+      </div>
+    </div>
+
+    <div class="admin-content">
+
+      <!-- DASHBOARD -->
+      <div class="admin-panel visible" id="panel-dashboard">
+        <div class="admin-stats">
+          <div class="stat-card c1"><div class="stat-icon">📦</div><div class="stat-val" id="stat-total">0</div><div class="stat-label">Produtos</div></div>
+          <div class="stat-card c2"><div class="stat-icon">🧾</div><div class="stat-val" id="stat-orders">0</div><div class="stat-label">Pedidos</div></div>
+          <div class="stat-card c3"><div class="stat-icon">💰</div><div class="stat-val" id="stat-revenue">R$0</div><div class="stat-label">Receita</div></div>
+          <div class="stat-card c4"><div class="stat-icon">🚚</div><div class="stat-val" id="stat-shipping">0</div><div class="stat-label">Em Transporte</div></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-title">🧾 Pedidos Recentes</div>
+          <div class="order-stats-grid">
+            <div class="order-stat-card"><div class="num" id="orders-pending-count">0</div><div class="lbl">Pagamentos Pendentes</div></div>
+            <div class="order-stat-card"><div class="num" id="orders-approved-count">0</div><div class="lbl">Pagamentos Aprovados</div></div>
+            <div class="order-stat-card"><div class="num" id="orders-shipped-count">0</div><div class="lbl">Em Transporte</div></div>
+            <div class="order-stat-card"><div class="num" id="orders-rejected-count">0</div><div class="lbl">Pagamentos Rejeitados</div></div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="admin-table">
+              <thead><tr><th>Pedido</th><th>Cliente</th><th>Data</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="recent-orders-tbody"><tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum pedido ainda.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="admin-panel" id="panel-orders">
+        <div class="admin-card">
+          <div class="admin-card-title">🧾 Gestão de Pedidos</div>
+          <div class="filter-row">
+            <input type="text" class="form-input" id="order-search" placeholder="🔍 Buscar por ID ou cliente…">
+            <select class="form-input" id="order-filter-status">
+              <option value="">Todos os status</option>
+              <option value="pending">Aguardando</option>
+              <option value="approved">Pagamento Aprovado</option>
+              <option value="shipped">Em Transporte</option>
+              <option value="delivered">Entregue</option>
+              <option value="rejected">Rejeitado</option>
+            </select>
+            <select class="form-input" id="order-filter-payment">
+              <option value="">Todos pagamentos</option>
+              <option value="cartao">Cartão</option>
+              <option value="pix">Pix</option>
+              <option value="boleto">Boleto</option>
+            </select>
+            <button class="btn btn-outline btn-sm" id="btn-clear-filters">Limpar</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="admin-table">
+              <thead><tr><th>Pedido</th><th>Cliente</th><th>Data</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="orders-tbody"><tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum pedido ainda.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD PRODUCT -->
+      <div class="admin-panel" id="panel-add-product">
+        <div class="admin-card">
+          <div class="admin-card-title">➕ Adicionar Novo Produto</div>
+          <form id="admin-add-form" novalidate>
+
+            <!-- Row 1: Name + Category -->
+            <div class="admin-form-grid">
+              <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" type="text" name="prod-name" placeholder="Nome do produto" required></div>
+              <div class="form-group"><label class="form-label">Categoria *</label>
+                <select class="form-input" name="prod-category" id="add-prod-category" required onchange="onCategoryChange('add')">
+                  <option value="">Selecione</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="feminino">Feminino</option>
+                  <option value="infantil">Infantil</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Preço *</label><input class="form-input" type="number" name="prod-price" placeholder="149.90" step="0.01" min="0" required></div>
+              <div class="form-group"><label class="form-label">Quantidade em Estoque *</label><input class="form-input" type="number" name="prod-stock" placeholder="10" min="0" required></div>
+              <div class="form-group"><label class="form-label">Preço Antigo</label><input class="form-input" type="number" name="prod-old-price" placeholder="199.90" step="0.01" min="0"></div>
+              <div class="form-group"><label class="form-label">Badge</label>
+                <select class="form-input" name="prod-badge">
+                  <option value="">Nenhuma</option><option value="new">NOVO</option>
+                  <option value="sale">SALE</option><option value="hot">HOT</option>
+                </select>
+              </div>
+              <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px">
+                <input type="checkbox" name="prod-featured" id="prod-featured" style="width:18px;height:18px;cursor:pointer">
+                <label for="prod-featured" class="form-label" style="margin:0;cursor:pointer">Destacar na Home</label>
+              </div>
+            </div>
+
+            <!-- Photos -->
+            <div style="margin-top:20px;padding:18px;background:#fafafa;border:1.5px dashed var(--gray-200);border-radius:6px">
+              <div style="font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">📸 Fotos do Produto (até 3)</div>
+              <div style="font-size:.75rem;color:var(--gray-400);margin-bottom:12px;">Cole URL, escolha arquivo 📁 ou copie a imagem e pressione <kbd style="background:#e8e8e8;padding:1px 5px;border-radius:3px;font-size:.75rem;">Ctrl+V</kbd> na área abaixo</div>
+
+              <!-- Paste zones -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+                <div id="paste-zone-1" data-target="prod-img" onclick="document.querySelector('[name=prod-img]').focus()" style="border:2px dashed #ccc;border-radius:8px;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s;position:relative;background:#fff;" title="Foto 1 — clique aqui e pressione Ctrl+V">
+                  <div id="paste-preview-1" style="display:none;width:100%;height:100%;position:absolute;inset:0;border-radius:6px;overflow:hidden;"><img style="width:100%;height:100%;object-fit:cover;"></div>
+                  <span style="font-size:1.4rem;">📷</span>
+                  <span style="font-size:.72rem;color:#aaa;text-align:center;padding:0 6px;">Foto 1 *<br>Ctrl+V aqui</span>
+                  <input type="hidden" name="prod-img" required>
+                </div>
+                <div id="paste-zone-2" data-target="prod-img2" onclick="document.querySelector('[name=prod-img2]').focus()" style="border:2px dashed #ccc;border-radius:8px;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s;position:relative;background:#fff;" title="Foto 2 — clique aqui e pressione Ctrl+V">
+                  <div id="paste-preview-2" style="display:none;width:100%;height:100%;position:absolute;inset:0;border-radius:6px;overflow:hidden;"><img style="width:100%;height:100%;object-fit:cover;"></div>
+                  <span style="font-size:1.4rem;">📷</span>
+                  <span style="font-size:.72rem;color:#aaa;text-align:center;padding:0 6px;">Foto 2<br>Ctrl+V aqui</span>
+                  <input type="hidden" name="prod-img2">
+                </div>
+                <div id="paste-zone-3" data-target="prod-img3" onclick="document.querySelector('[name=prod-img3]').focus()" style="border:2px dashed #ccc;border-radius:8px;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s;position:relative;background:#fff;" title="Foto 3 — clique aqui e pressione Ctrl+V">
+                  <div id="paste-preview-3" style="display:none;width:100%;height:100%;position:absolute;inset:0;border-radius:6px;overflow:hidden;"><img style="width:100%;height:100%;object-fit:cover;"></div>
+                  <span style="font-size:1.4rem;">📷</span>
+                  <span style="font-size:.72rem;color:#aaa;text-align:center;padding:0 6px;">Foto 3<br>Ctrl+V aqui</span>
+                  <input type="hidden" name="prod-img3">
+                </div>
+              </div>
+
+              <!-- URL inputs + file buttons -->
+              <div class="admin-form-grid">
+                <div class="form-group">
+                  <label class="form-label">Foto 1 — URL ou Arquivo</label>
+                  <div style="display:flex;gap:6px;">
+                    <input class="form-input" type="text" name="prod-img-url" placeholder="https://... ou cole aqui" style="flex:1" oninput="syncImgFromUrl(this,'prod-img','paste-zone-1','paste-preview-1')">
+                    <label style="cursor:pointer;padding:8px 10px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.8rem;white-space:nowrap;display:flex;align-items:center;" title="Escolher arquivo">
+                      📁 <input type="file" accept="image/*" style="display:none" onchange="handleImgFile(this,'prod-img','paste-zone-1','paste-preview-1')">
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Foto 2 — URL ou Arquivo</label>
+                  <div style="display:flex;gap:6px;">
+                    <input class="form-input" type="text" name="prod-img2-url" placeholder="https://... ou cole aqui" style="flex:1" oninput="syncImgFromUrl(this,'prod-img2','paste-zone-2','paste-preview-2')">
+                    <label style="cursor:pointer;padding:8px 10px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.8rem;white-space:nowrap;display:flex;align-items:center;" title="Escolher arquivo">
+                      📁 <input type="file" accept="image/*" style="display:none" onchange="handleImgFile(this,'prod-img2','paste-zone-2','paste-preview-2')">
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Foto 3 — URL ou Arquivo</label>
+                  <div style="display:flex;gap:6px;">
+                    <input class="form-input" type="text" name="prod-img3-url" placeholder="https://... ou cole aqui" style="flex:1" oninput="syncImgFromUrl(this,'prod-img3','paste-zone-3','paste-preview-3')">
+                    <label style="cursor:pointer;padding:8px 10px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.8rem;white-space:nowrap;display:flex;align-items:center;" title="Escolher arquivo">
+                      📁 <input type="file" accept="image/*" style="display:none" onchange="handleImgFile(this,'prod-img3','paste-zone-3','paste-preview-3')">
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:4px" id="add-photo-preview"></div>
+            </div>
+
+            <!-- Sizes -->
+            <div style="margin-top:20px;padding:18px;background:#fafafa;border:1.5px dashed var(--gray-200);border-radius:6px">
+              <div style="font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">📏 Tamanhos Disponíveis</div>
+              <!-- Adult sizes -->
+              <div id="add-sizes-adult">
+                <div style="font-size:.8rem;color:var(--gray-600);margin-bottom:8px">Selecione os tamanhos adultos disponíveis:</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="PP" style="accent-color:var(--black)"> PP
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="P" style="accent-color:var(--black)"> P
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="M" style="accent-color:var(--black)"> M
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="G" style="accent-color:var(--black)"> G
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="GG" style="accent-color:var(--black)"> GG
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="XG" style="accent-color:var(--black)"> XG
+                  </label>
+                </div>
+              </div>
+              <!-- Kids sizes -->
+              <div id="add-sizes-kids" style="display:none">
+                <div style="font-size:.8rem;color:var(--gray-600);margin-bottom:8px">Selecione os tamanhos infantis disponíveis:</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="1" style="accent-color:var(--black)"> 1
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="2" style="accent-color:var(--black)"> 2
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="4" style="accent-color:var(--black)"> 4
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="6" style="accent-color:var(--black)"> 6
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="8" style="accent-color:var(--black)"> 8
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="10" style="accent-color:var(--black)"> 10
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="12" style="accent-color:var(--black)"> 12
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 12px;font-size:.85rem;font-weight:600;transition:all .15s" class="size-toggle-label">
+                    <input type="checkbox" name="prod-sizes" value="14" style="accent-color:var(--black)"> 14
+                  </label>
+                </div>
+              </div>
+              <div id="add-sizes-none" style="font-size:.8rem;color:var(--gray-400);padding:8px 0">Selecione uma categoria para ver os tamanhos disponíveis.</div>
+            </div>
+
+            <!-- Description -->
+            <div style="margin-top:20px">
+              <div class="form-group">
+                <label class="form-label">Descrição do Produto</label>
+                <textarea class="form-input" name="prod-description" rows="4" placeholder="Descreva o produto: material, caimento, dicas de uso, cuidados..." style="resize:vertical;min-height:100px"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:20px;display:flex;gap:12px">
+              <button type="submit" class="btn btn-primary">➕ Adicionar Produto</button>
+              <button type="reset" class="btn btn-outline" onclick="clearAddPhotoPreview()">Limpar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="admin-panel" id="panel-products">
+        <div class="admin-card">
+          <div class="admin-card-title">📦 Produtos Cadastrados</div>
+          <div style="overflow-x:auto">
+            <table class="admin-table">
+              <thead><tr><th>Img</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Preço Antigo</th><th>Qtd</th><th>Badge</th><th>Ações</th></tr></thead>
+              <tbody id="admin-products-tbody"><tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECURITY -->
+      <div class="admin-panel" id="panel-security">
+        <div class="admin-card">
+          <div class="admin-card-title">🔐 Configurações de Segurança</div>
+          <div class="admin-form-grid" style="margin-bottom:20px">
+            <div><label class="form-label">E-mail Admin</label><input class="form-input" type="email" id="sec-email" value="lkmodamasculina089@gmail.com"></div>
+            <div><label class="form-label">Nova Senha (mín. 8 chars)</label><input class="form-input" type="password" id="sec-pass" placeholder="Deixe em branco para manter"></div>
+            <div><label class="form-label">Confirmar Nova Senha</label><input class="form-input" type="password" id="sec-pass-confirm" placeholder="Confirmar senha"></div>
+            <div><label class="form-label">Timeout de Sessão</label>
+              <select class="form-input" id="sec-timeout">
+                <option value="15">15 minutos</option>
+                <option value="30" selected>30 minutos</option>
+                <option value="60">60 minutos</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-save-security">💾 Salvar</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-title">📋 Log de Acesso</div>
+          <div class="security-log" id="security-log"></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-title">⚠️ Ações de Risco</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" id="btn-clear-log">🗑 Limpar Log</button>
+            <button class="btn btn-sm" style="border:1.5px solid var(--crimson);color:var(--crimson);background:none" id="btn-force-logout">🔒 Forçar Logout</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="order-detail-modal">
+  <div class="modal" style="max-width:660px;text-align:left;padding:0;overflow:hidden;max-height:88vh;overflow-y:auto">
+    <div class="odm-header">
+      <div>
+        <h2 id="odm-title">Pedido</h2>
+        <div id="odm-date" style="font-size:.78rem;color:rgba(255,255,255,.4);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" style="color:rgba(255,255,255,.5);font-size:1.5rem;background:none;border:none;cursor:pointer">&times;</button>
+    </div>
+    <div class="odm-body">
+      <div class="odm-grid" id="odm-grid"></div>
+      <div style="border-top:1px solid var(--gray-200);padding-top:18px;margin-bottom:18px">
+        <label class="form-label">Itens do Pedido</label>
+        <div id="odm-items" style="margin-top:10px"></div>
+      </div>
+      <div style="border-top:1px solid var(--gray-200);padding-top:18px">
+        <label class="form-label" style="margin-bottom:10px;display:block">Rastreamento</label>
+        <div id="odm-timeline"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PRODUCT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal" style="max-width:600px;text-align:left;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;position:sticky;top:0;background:white;padding-bottom:12px;border-bottom:1px solid var(--gray-200)">
+      <h2 style="font-family:var(--font-display);font-size:1.2rem">✏️ Editar Produto</h2>
+      <button class="modal-close" style="font-size:1.4rem;color:var(--gray-400);background:none;border:none;cursor:pointer">&times;</button>
+    </div>
+    <form id="edit-product-form" novalidate>
+      <div class="admin-form-grid">
+        <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" type="text" id="edit-name" required></div>
+        <div class="form-group"><label class="form-label">Categoria *</label>
+          <select class="form-input" id="edit-category" required onchange="onCategoryChange('edit')">
+            <option value="masculino">Masculino</option>
+            <option value="feminino">Feminino</option>
+            <option value="infantil">Infantil</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Preço *</label><input class="form-input" type="number" id="edit-price" step="0.01" min="0" required></div>
+        <div class="form-group"><label class="form-label">Qtd. em Estoque *</label><input class="form-input" type="number" id="edit-stock" min="0" required></div>
+        <div class="form-group"><label class="form-label">Preço Antigo</label><input class="form-input" type="number" id="edit-old-price" step="0.01" min="0"></div>
+        <div class="form-group"><label class="form-label">Badge</label>
+          <select class="form-input" id="edit-badge">
+            <option value="">Nenhuma</option><option value="new">NOVO</option>
+            <option value="sale">SALE</option><option value="hot">HOT</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px">
+          <input type="checkbox" id="edit-featured" style="width:18px;height:18px;cursor:pointer">
+          <label for="edit-featured" class="form-label" style="margin:0;cursor:pointer">Destacar na Home</label>
+        </div>
+      </div>
+
+      <!-- Photos -->
+      <div style="margin-top:18px;padding:14px;background:#fafafa;border:1.5px dashed var(--gray-200);border-radius:6px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--gray-600);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">📸 Fotos (até 3)</div>
+        <div class="admin-form-grid">
+          <!-- Edit paste zones -->
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label" style="margin-bottom:6px;">Fotos — Cole Ctrl+V, URL ou 📁 arquivo</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+              <div id="edit-paste-zone-1" style="border:2px dashed #ccc;border-radius:8px;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;background:#fafafa;" title="Foto 1 — Ctrl+V">
+                <div id="edit-paste-preview-1" style="display:none;width:100%;height:100%;position:absolute;inset:0;border-radius:6px;overflow:hidden;"><img style="width:100%;height:100%;object-fit:cover;"></div>
+                <span style="font-size:1.2rem;">📷</span><span style="font-size:.7rem;color:#aaa;">Foto 1 · Ctrl+V</span>
+                <input type="hidden" id="edit-img">
+              </div>
+              <div id="edit-paste-zone-2" style="border:2px dashed #ccc;border-radius:8px;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;background:#fafafa;" title="Foto 2 — Ctrl+V">
+                <div id="edit-paste-preview-2" style="display:none;width:100%;height:100%;position:absolute;inset:0;border-radius:6px;overflow:hidden;"><img style="width:100%;height:100%;object-fit:cover;"></div>
+                <span style="font-size:1.2rem;">📷</span><span style="font-size:.7rem;color:#aaa;">Foto 2 · Ctrl+V</span>
+                <input type="hidden" id="edit-img2">
+              </div>
+              <div id="edit-paste-zone-3" style="border:2px dashed #ccc;border-radius:8px;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;background:#fafafa;" title="Foto 3 — Ctrl+V">
+                <div id="edit-paste-preview-3" style="display:none;width:100%;height:100%;position:absolute;inset:0;border-radius:6px;overflow:hidden;"><img style="width:100%;height:100%;object-fit:cover;"></div>
+                <span style="font-size:1.2rem;">📷</span><span style="font-size:.7rem;color:#aaa;">Foto 3 · Ctrl+V</span>
+                <input type="hidden" id="edit-img3">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div style="display:flex;gap:4px;">
+                <input class="form-input" type="text" id="edit-img-url" placeholder="URL foto 1" style="flex:1;font-size:.8rem;" oninput="syncImgFromUrl(this,'edit-img','edit-paste-zone-1','edit-paste-preview-1',true)">
+                <label style="cursor:pointer;padding:7px 8px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.8rem;display:flex;align-items:center;">📁<input type="file" accept="image/*" style="display:none" onchange="handleImgFile(this,'edit-img','edit-paste-zone-1','edit-paste-preview-1',true)"></label>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <input class="form-input" type="text" id="edit-img2-url" placeholder="URL foto 2" style="flex:1;font-size:.8rem;" oninput="syncImgFromUrl(this,'edit-img2','edit-paste-zone-2','edit-paste-preview-2',true)">
+                <label style="cursor:pointer;padding:7px 8px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.8rem;display:flex;align-items:center;">📁<input type="file" accept="image/*" style="display:none" onchange="handleImgFile(this,'edit-img2','edit-paste-zone-2','edit-paste-preview-2',true)"></label>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <input class="form-input" type="text" id="edit-img3-url" placeholder="URL foto 3" style="flex:1;font-size:.8rem;" oninput="syncImgFromUrl(this,'edit-img3','edit-paste-zone-3','edit-paste-preview-3',true)">
+                <label style="cursor:pointer;padding:7px 8px;background:var(--gray-100);border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.8rem;display:flex;align-items:center;">📁<input type="file" accept="image/*" style="display:none" onchange="handleImgFile(this,'edit-img3','edit-paste-zone-3','edit-paste-preview-3',true)"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px" id="edit-photo-preview"></div>
+      </div>
+
+      <!-- Sizes -->
+      <div style="margin-top:18px;padding:14px;background:#fafafa;border:1.5px dashed var(--gray-200);border-radius:6px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--gray-600);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">📏 Tamanhos</div>
+        <div id="edit-sizes-adult">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="PP" style="accent-color:var(--black)"> PP
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="P" style="accent-color:var(--black)"> P
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="M" style="accent-color:var(--black)"> M
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="G" style="accent-color:var(--black)"> G
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="GG" style="accent-color:var(--black)"> GG
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="XG" style="accent-color:var(--black)"> XG
+            </label>
+          </div>
+        </div>
+        <div id="edit-sizes-kids" style="display:none">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="1" style="accent-color:var(--black)"> 1
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="2" style="accent-color:var(--black)"> 2
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="4" style="accent-color:var(--black)"> 4
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="6" style="accent-color:var(--black)"> 6
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="8" style="accent-color:var(--black)"> 8
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="10" style="accent-color:var(--black)"> 10
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="12" style="accent-color:var(--black)"> 12
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;background:white;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 10px;font-size:.82rem;font-weight:600">
+              <input type="checkbox" name="edit-sizes" value="14" style="accent-color:var(--black)"> 14
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="margin-top:16px">
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea class="form-input" id="edit-description" rows="3" style="resize:vertical;min-height:80px" placeholder="Descreva o produto..."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px">
+        <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        <button type="button" class="btn btn-outline modal-close">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast"></div>
+<!-- Firebase SDK (compat - funciona com Live Server) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script>
+'use strict';
+/* ════════════════════════════════════════════════
+   ADMIN — Security + Orders Module
+   ════════════════════════════════════════════════ */
+
+const ADMIN_CREDS_KEY   = 'lkmodas_admin_creds';
+const ADMIN_SESSION_KEY = 'lkmodas_admin';
+const SECURITY_LOG_KEY  = 'lkmodas_security_log';
+const ORDERS_KEY        = 'lkmodas_orders';
+const MAX_ATTEMPTS      = 3;
+const LOCK_MS           = 5 * 60 * 1000;
+const DEFAULT_ADMIN_CREDS = { email:'lkmodamasculina089@gmail.com', password:'kamperlk122709!' };
+
+const adminMemory = {
+  [ADMIN_CREDS_KEY]: { ...DEFAULT_ADMIN_CREDS },
+  [SECURITY_LOG_KEY]: [],
+  [ORDERS_KEY]: [],
+  orders: [],
+  lkmodas_admin_attempts: 0,
+  lkmodas_admin_lock: 0,
+  lkmodas_admin_timeout: 30,
+};
+const cloneState = value => (value && typeof value === 'object') ? JSON.parse(JSON.stringify(value)) : value;
+const gget = (k,d=null) => Object.prototype.hasOwnProperty.call(adminMemory, k) ? cloneState(adminMemory[k]) : d;
+const gset = (k,v) => {
+  if (v === null || v === undefined) delete adminMemory[k];
+  else adminMemory[k] = cloneState(v);
+};
+const fmtP = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+const fmtDt = d => new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+/**
+ * Exibe notificação toast com suporte a diferentes tipos
+ * @param {string} msg - Mensagem a exibir
+ * @param {string} type - 'success', 'error', 'info', 'warning' (padrão: 'success')
+ */
+function showToast(msg, type = 'success') {
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  const icons = {
+    'success': '✅',
+    'error': '❌',
+    'info': 'ℹ️',
+    'warning': '⚠️'
+  };
+  const icon = icons[type] || icons.success;
+  toast.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:#fff"><span>${icon}</span><span>${msg}</span></div>`;
+  toast.className = `toast show toast-${type}`;
+  toast.style.background = {
+    'success': '#22c55e',
+    'error': '#ef4444',
+    'info': '#3b82f6',
+    'warning': '#eab308'
+  }[type] || '#22c55e';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove('show');
+    toast.style.background = '';
+  }, 3500);
+}
+
+function addLog(type, msg) {
+  const log = gget(SECURITY_LOG_KEY, []);
+  log.unshift({ type, msg, time: new Date().toISOString() });
+  gset(SECURITY_LOG_KEY, log.slice(0,100));
+}
+
+// ── Session timer ─────────────────────────────────
+let sessSec = 30*60, sessInterval = null;
+
+function startSession() {
+  const mins = gget('lkmodas_admin_timeout', 30);
+  sessSec = mins * 60;
+  clearInterval(sessInterval);
+  sessInterval = setInterval(() => {
+    sessSec--;
+    const m = String(Math.floor(sessSec/60)).padStart(2,'0');
+    const s = String(sessSec%60).padStart(2,'0');
+    const txt = `${m}:${s}`;
+    ['session-countdown','session-countdown-top'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = txt;
+    });
+    const bar = document.getElementById('session-bar-fill');
+    const pct = (sessSec/(mins*60))*100;
+    if (bar) { bar.style.width = pct+'%'; bar.className = 'session-bar-fill'+(pct<20?' warn':''); }
+    if (sessSec <= 0) { clearInterval(sessInterval); addLog('action','Sessão expirada.'); doLogout(); alert('Sessão expirada. Faça login novamente.'); }
+  }, 1000);
+}
+
+['click','keydown','mousemove'].forEach(ev => document.addEventListener(ev, () => { if (sessSec > 0) sessSec = Math.min(sessSec + 5, gget('lkmodas_admin_timeout',30)*60); }));
+
+// ── Login security ────────────────────────────────
+let loginAttempts = gget('lkmodas_admin_attempts', 0);
+let lockUntil     = gget('lkmodas_admin_lock', 0);
+let pendingCode   = null;
+const ADMIN_EMAIL_ALIASES = ['lkmodamasculina089@gmail.com'];
+
+function getCreds() {
+  const stored = gget(ADMIN_CREDS_KEY, null);
+  const normalized = {
+    email: String(stored?.email || '').trim().toLowerCase(),
+    password: String(stored?.password || '').trim()
+  };
+
+  if (normalized.email !== DEFAULT_ADMIN_CREDS.email || !normalized.password) {
+    gset(ADMIN_CREDS_KEY, DEFAULT_ADMIN_CREDS);
+    return { ...DEFAULT_ADMIN_CREDS };
+  }
+
+  return normalized;
+}
+function isLocked() { return lockUntil > Date.now(); }
+function isAllowedAdminEmail(email, creds) {
+  const normalized = String(email || '').trim().toLowerCase();
+  const allowed = new Set([String(creds?.email || '').trim().toLowerCase(), ...ADMIN_EMAIL_ALIASES]);
+  return allowed.has(normalized);
+}
+
+function updateDots() {
+  for (let i=1; i<=3; i++) {
+    const d = document.getElementById(`dot-${i}`);
+    if (d) d.className = 'attempt-dot'+(i<=loginAttempts?' used':'');
+  }
+}
+
+function checkLock() {
+  const lw = document.getElementById('lock-warning');
+  const lm = document.getElementById('lock-msg');
+  const btn = document.getElementById('btn-admin-login');
+  if (isLocked()) {
+    const rem = Math.ceil((lockUntil-Date.now())/1000);
+    if (lm) lm.textContent = `Conta bloqueada. Aguarde ${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}.`;
+    if (lw) lw.style.display = 'flex';
+    if (btn) btn.disabled = true;
+  } else {
+    if (lw) lw.style.display = 'none';
+    if (btn) btn.disabled = false;
+  }
+}
+
+if (isLocked()) { updateDots(); checkLock(); setInterval(checkLock, 1000); }
+else updateDots();
+
+document.getElementById('btn-admin-login').addEventListener('click', async () => {
+  if (isLocked()) { checkLock(); return; }
+  const email = document.getElementById('admin-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('admin-pass').value;
+  const errEl = document.getElementById('admin-login-error');
+  const creds = getCreds();
+
+  if (isAllowedAdminEmail(email, creds) && pass === creds.password) {
+    if (window.FB?.loginAdmin) {
+      const fbLogin = await window.FB.loginAdmin(email, pass);
+      if (!fbLogin?.ok) {
+        errEl.textContent = fbLogin?.message || 'Falha ao autenticar no Firebase.';
+        errEl.classList.add('show');
+        addLog('fail', `Firebase recusou login para "${email}".`);
+        return;
+      }
+    }
+    loginAttempts = 0; gset('lkmodas_admin_attempts', 0);
+    pendingCode = String(Math.floor(100000 + Math.random()*900000));
+    document.getElementById('demo-code-hint').textContent = `⚠️ DEMO — Código: ${pendingCode}`;
+    addLog('action', `Credenciais aceitas para ${email}. Aguardando 2FA.`);
+    document.getElementById('login-step-1').style.display = 'none';
+    document.getElementById('login-step-2').style.display = 'block';
+    setTimeout(() => document.querySelector('.twofa-digit').focus(), 100);
+  } else {
+    loginAttempts++;
+    gset('lkmodas_admin_attempts', loginAttempts);
+    updateDots();
+    addLog('fail', `Login falho para "${email}" (${loginAttempts}/${MAX_ATTEMPTS}).`);
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      lockUntil = Date.now()+LOCK_MS;
+      gset('lkmodas_admin_lock', lockUntil);
+      loginAttempts = 0; gset('lkmodas_admin_attempts', 0);
+      addLog('fail','Conta bloqueada por excesso de tentativas.');
+      checkLock(); setInterval(checkLock, 1000);
+      errEl.textContent = 'Conta bloqueada por 5 minutos.'; errEl.classList.add('show');
+    } else {
+      errEl.textContent = `Credenciais inválidas. ${MAX_ATTEMPTS-loginAttempts} tentativa(s) restante(s).`;
+      errEl.classList.add('show');
+    }
+  }
+});
+
+// 2FA digit input navigation
+document.getElementById('twofa-inputs').querySelectorAll('.twofa-digit').forEach((inp,i,all) => {
+  inp.addEventListener('input', () => {
+    inp.value = inp.value.replace(/\D/g,'').slice(-1);
+    if (inp.value && i < all.length-1) all[i+1].focus();
+    if ([...all].every(d => d.value)) document.getElementById('btn-verify-2fa').click();
+  });
+  inp.addEventListener('keydown', e => { if (e.key==='Backspace' && !inp.value && i>0) all[i-1].focus(); });
+});
+
+document.getElementById('btn-verify-2fa').addEventListener('click', async () => {
+  const code = [...document.getElementById('twofa-inputs').querySelectorAll('.twofa-digit')].map(d=>d.value).join('');
+  const errEl = document.getElementById('twofa-error');
+  if (code.length !== 6) { errEl.textContent='Digite os 6 dígitos.'; errEl.classList.add('show'); return; }
+  if (code === pendingCode) {
+    const finalEmail = document.getElementById('admin-email').value.trim().toLowerCase() || getCreds().email;
+    gset(ADMIN_SESSION_KEY, { email: finalEmail, loginTime: Date.now() });
+    addLog('success', `Login bem-sucedido: ${finalEmail}`);
+    pendingCode = null;
+    
+    // 🔐 Autentica no Firebase com credenciais do admin (sem gravar sessão do cliente)
+    if (window.FB?.loginAdmin) {
+      try {
+        await window.FB.loginAdmin(finalEmail, getCreds().password);
+      } catch (e) {
+        console.warn('Firebase login falhou (pode estar offline):', e);
+      }
+    }
+    
+    showDashboard();
+  } else {
+    errEl.textContent='Código incorreto.'; errEl.classList.add('show');
+    addLog('fail','Código 2FA incorreto.');
+    document.getElementById('twofa-inputs').querySelectorAll('.twofa-digit').forEach(d=>d.value='');
+    document.getElementById('twofa-inputs').querySelectorAll('.twofa-digit')[0].focus();
+  }
+});
+
+document.getElementById('btn-resend-code').addEventListener('click', e => {
+  e.preventDefault();
+  pendingCode = String(Math.floor(100000+Math.random()*900000));
+  document.getElementById('demo-code-hint').textContent = `⚠️ DEMO — Novo código: ${pendingCode}`;
+  showToast('Código reenviado!');
+});
+
+function getActiveAdminSession() {
+  const session = gget(ADMIN_SESSION_KEY, null);
+  if (session) return session;
+
+  const user = window.FB?.getCurrentUser?.();
+  if (user?.email && isAllowedAdminEmail(user.email, getCreds())) {
+    const fbSession = { email: user.email, loginTime: Date.now() };
+    gset(ADMIN_SESSION_KEY, fbSession);
+    return fbSession;
+  }
+
+  return null;
+}
+
+// Auto-login + Firebase init - wait for firebase-ready event or timeout
+function tryAutoInit() {
+  if (getActiveAdminSession()) showDashboard();
+}
+if (window.FB) {
+  tryAutoInit();
+} else {
+  window.addEventListener('firebase-ready', tryAutoInit, { once: true });
+  setTimeout(tryAutoInit, 2000); // fallback
+}
+
+function showDashboard() {
+  document.getElementById('admin-login').style.display = 'none';
+  document.getElementById('admin-dashboard').style.display = 'grid';
+  startSession();
+  renderDashboard();
+  refreshAdminProducts();
+  initFirebaseProducts();
+  initFirebaseOrders();
+  const s = gget(ADMIN_SESSION_KEY);
+  if (s) {
+    document.getElementById('admin-avatar').textContent = s.email[0].toUpperCase();
+    document.getElementById('admin-user-name').textContent = s.email.split('@')[0];
+  }
+}
+
+function doLogout() {
+  gset(ADMIN_SESSION_KEY, null);
+  clearInterval(sessInterval);
+  if (window.FB?.getCurrentUser?.()) {
+    firebase.auth().signOut().then(() => { location.href = 'admin.html'; }).catch(() => { location.href = 'admin.html'; });
+    return;
+  }
+  location.href = 'admin.html';
+}
+
+document.getElementById('admin-logout').addEventListener('click', (e) => {
+  e.preventDefault();
+  addLog('action','Logout manual.');
+  doLogout();
+});
+
+// ── Panel switching ───────────────────────────────
+function switchPanel(name, el) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
+  const panel = document.getElementById(`panel-${name}`);
+  if (panel) panel.classList.add('visible');
+  if (el) el.classList.add('active');
+  const titles = { dashboard:'Dashboard', orders:'Pedidos', 'add-product':'Adicionar Produto', products:'Produtos', security:'Segurança' };
+  document.getElementById('admin-page-title').textContent = titles[name] || '';
+  if (name==='orders')   renderOrdersTable({});
+  if (name==='products') { refreshAdminProducts(true); renderProductsTable(); }
+  if (name==='security') renderSecurityLog();
+  if (name==='dashboard') renderDashboard();
+}
+
+// ── Orders ────────────────────────────────────────
+const STATUS_CFG = {
+  pending:   { label:'Aguardando Pagamento', icon:'🕐' },
+  approved:  { label:'Pagamento Aprovado',   icon:'✅' },
+  shipped:   { label:'Em Transporte',        icon:'🚚' },
+  delivered: { label:'Entregue',             icon:'📦' },
+  rejected:  { label:'Rejeitado',            icon:'❌' },
+};
+const PAY_LABEL = { cartao:'💳 Cartão', pix:'⚡ Pix', boleto:'📄 Boleto' };
+const TL_STEPS  = ['Pedido Recebido','Pagamento Aprovado','Em Preparação','Saiu para Entrega','Entregue'];
+
+
+STATUS_CFG.rejected = { label:'Rejeitado', icon:'âŒ' };
+function getOrders() {
+  const primary = gget(ORDERS_KEY, []);
+  const legacy = gget('orders', []);
+  const merged = [...primary];
+
+  legacy.forEach(order => {
+    if (!merged.find(existing => String(existing.id) === String(order.id))) {
+      merged.push(order);
+    }
+  });
+
+  return merged;
+}
+
+function saveOrders(orders) {
+  gset(ORDERS_KEY, orders);
+  gset('orders', orders);
+}
+function orderStatus(o) { return o.status || o.payment?.status || 'pending'; }
+function orderPaymentMethod(o) { return o.paymentMethod || o.payment?.method || o.payment || ''; }
+function orderCustomerName(o) { return o.nome || o.delivery?.nome || o.customer?.name || o.userEmail || o.email || '”'; }
+function orderCustomerEmail(o) { return o.userEmail || o.email || o.customer?.email || '”'; }
+function orderAddress(o) { return o.endereco || o.delivery?.endereco || o.delivery?.address || '”'; }
+function orderCity(o) { return o.cidade || o.delivery?.cidade || o.delivery?.city || '”'; }
+function orderCep(o) { return o.cep || o.delivery?.cep || '”'; }
+function orderDate(o) {
+  if (o?.createdAt?.toDate) return o.createdAt.toDate();
+  if (o?.createdAt?.seconds) return new Date(o.createdAt.seconds * 1000);
+  return new Date(o.createdAt || o.date || o.timestamp || Date.now());
+}
+function orderItems(o) { return Array.isArray(o.items) ? o.items : []; }
+
+// Carrega pedidos do Firebase em tempo real
+function initFirebaseOrders() {
+  if (initFirebaseOrders._unsubscribe || !window.FB?.listenOrders) return;
+  initFirebaseOrders._unsubscribe = window.FB.listenOrders(orders => {
+    gset(ORDERS_KEY, orders);
+    // Re-renderiza se a tabela estiver visível
+    const panel = document.getElementById('panel-orders');
+    if (panel && panel.classList.contains('visible')) {
+      renderOrdersTable(filterState);
+    }
+    renderDashboard();
+  });
+}
+
+async function updateOrderStatus(id, status) {
+  const orders = getOrders();
+  const o = orders.find(o => o.id === id);
+  if (!o) return;
+  o.status = status;
+  // Atualiza no Firebase
+  if (window.FB) {
+    await window.FB.updateOrderStatus(id, status);
+  }
+  const idx = { confirmed:0, processing:1, shipped:2, delivered:3 };
+  if (!o.timeline) o.timeline = [null,null,null,null,null];
+  if (idx[status] !== undefined) {
+    for (let i=0; i<=idx[status]; i++) if (!o.timeline[i]) o.timeline[i] = new Date().toISOString();
+  }
+  if (status === 'delivered' && !o.timeline[4]) o.timeline[4] = new Date().toISOString();
+  saveOrders(orders);
+  addLog('action', `Pedido #${id} → "${STATUS_CFG[status]?.label}".`);
+}
+
+window.changeOrderStatus = function(sel) {
+  updateOrderStatus(sel.dataset.orderid, sel.value);
+  sel.className = `status-select ${sel.value}`;
+  showToast(`Status atualizado: ${STATUS_CFG[sel.value]?.label}`);
+  if (document.getElementById('panel-dashboard').classList.contains('visible')) renderDashboard();
+};
+
+function renderDashboard() {
+  const orders   = getOrders();
+  const products = getAdminProducts();
+  const revenue  = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+o.total,0);
+  document.getElementById('stat-total').textContent    = products.length;
+  document.getElementById('stat-orders').textContent   = orders.length;
+  document.getElementById('stat-revenue').textContent  = revenue > 0 ? fmtP(revenue) : 'R$0';
+  document.getElementById('stat-shipping').textContent = orders.filter(o=>o.status==='shipped').length;
+  document.getElementById('badge-orders').textContent  = orders.length;
+
+  const tbody  = document.getElementById('recent-orders-tbody');
+  const recent = orders.slice().reverse().slice(0,5);
+  if (!tbody) return;
+  tbody.innerHTML = recent.length
+    ? recent.map(o => orderRowHTML(o, false)).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum pedido ainda.</td></tr>';
+}
+
+function renderOrdersTable(filter={}) {
+  let orders = getOrders().slice().reverse();
+  const q = (filter.search||'').toLowerCase();
+  if (q) orders = orders.filter(o => o.id.toLowerCase().includes(q) || (o.delivery?.nome||'').toLowerCase().includes(q) || (o.userEmail||'').toLowerCase().includes(q));
+  if (filter.status)  orders = orders.filter(o => o.status===filter.status);
+  if (filter.payment) orders = orders.filter(o => o.payment===filter.payment);
+  const tbody = document.getElementById('orders-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = orders.length
+    ? orders.map(o => orderRowHTML(o, true)).join('')
+    : '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum pedido encontrado.</td></tr>';
+}
+
+function orderRowHTML(o, showItems) {
+  const opts = Object.entries(STATUS_CFG).map(([v,c]) =>
+    `<option value="${v}"${o.status===v?' selected':''}>${c.icon} ${c.label}</option>`
+  ).join('');
+  return `<tr>
+    <td><strong style="font-family:var(--font-display);font-size:.88rem">#${o.id}</strong></td>
+    <td><div style="font-weight:600;font-size:.84rem">${o.delivery?.nome||'—'}</div>
+        <div style="font-size:.72rem;color:var(--gray-400)">${o.userEmail||'—'}</div></td>
+    <td style="font-size:.78rem;white-space:nowrap">${fmtDt(o.date)}</td>
+    ${showItems?`<td style="text-align:center">${(o.items||[]).reduce((s,i)=>s+i.qty,0)}</td>`:''}
+    <td style="font-weight:700">${fmtP(o.total)}</td>
+    <td style="font-size:.8rem">${PAY_LABEL[o.payment]||'—'}</td>
+    <td><select class="status-select ${o.status}" data-orderid="${o.id}" onchange="changeOrderStatus(this)">${opts}</select></td>
+    <td><div class="table-actions"><button class="tbl-btn tbl-btn-view" onclick="openOrderDetail('${o.id}')">Ver</button></div></td>
+  </tr>`;
+}
+
+window.openOrderDetail = function(id) {
+  const o = getOrders().find(o=>o.id===id);
+  if (!o) return;
+  const products = getAdminProducts();
+  const STATUS_PROG = { pending:0, confirmed:1, processing:2, shipped:3, delivered:5, cancelled:0 };
+  document.getElementById('odm-title').textContent = `Pedido #${o.id}`;
+  document.getElementById('odm-date').textContent  = fmtDt(o.date);
+  document.getElementById('odm-grid').innerHTML = `
+    <div class="odm-field"><label>Cliente</label><p>${o.delivery?.nome||'—'}</p></div>
+    <div class="odm-field"><label>E-mail</label><p>${o.userEmail||'—'}</p></div>
+    <div class="odm-field"><label>Endereço</label><p>${o.delivery?.endereco||'—'}</p></div>
+    <div class="odm-field"><label>Cidade / CEP</label><p>${o.delivery?.cidade||'—'} — ${o.delivery?.cep||'—'}</p></div>
+    <div class="odm-field"><label>Pagamento</label><p>${PAY_LABEL[o.payment]||o.payment||'—'}</p></div>
+    <div class="odm-field"><label>Total</label><p style="color:var(--crimson);font-size:1.05rem">${fmtP(o.total)}</p></div>`;
+  document.getElementById('odm-items').innerHTML = (o.items||[]).map(item => {
+    const prod = products.find(p=>p.id===item.id);
+    if (!prod) return `<div style="font-size:.82rem;color:var(--gray-400);margin-bottom:6px">Item #${item.id} ×${item.qty}</div>`;
+    return `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+      <img src="${prod.img}" style="width:44px;aspect-ratio:3/4;object-fit:cover;border-radius:2px">
+      <div><div style="font-weight:600;font-size:.85rem">${prod.name}</div>
+           <div style="font-size:.75rem;color:var(--gray-400)">${prod.category} · ×${item.qty} = ${fmtP(prod.price*item.qty)}</div></div></div>`;
+  }).join('');
+  const done = STATUS_PROG[o.status]||0;
+  document.getElementById('odm-timeline').innerHTML = TL_STEPS.map((step,i) => {
+    const cls = i<done?'done':(i===done?'active':'pending');
+    const ts  = o.timeline&&o.timeline[i] ? fmtDt(o.timeline[i]) : '';
+    return `<div class="mini-step ${cls}">
+      <div class="mini-dot ${cls}"></div>
+      <div class="mini-step-text">
+        <strong>${step}</strong>
+        <span>${ts||(cls==='pending'?'Aguardando...':'')}</span>
+      </div></div>`;
+  }).join('');
+  document.getElementById('order-detail-modal').classList.add('open');
+};
+
+function updateOrderCounters(orders) {
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const counters = {
+    pending: safeOrders.filter(o => orderStatus(o) === 'pending').length,
+    approved: safeOrders.filter(o => orderStatus(o) === 'approved').length,
+    shipped: safeOrders.filter(o => orderStatus(o) === 'shipped').length,
+    rejected: safeOrders.filter(o => orderStatus(o) === 'rejected').length,
+  };
+  [
+    ['orders-pending-count', counters.pending],
+    ['orders-approved-count', counters.approved],
+    ['orders-shipped-count', counters.shipped],
+    ['orders-rejected-count', counters.rejected],
+  ].forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
+}
+
+function orderActionHTML(o) {
+  const status = orderStatus(o);
+  if (status === 'pending') {
+    return `
+      <button class="tbl-btn tbl-btn-approve" onclick="setOrderStatus('${o.id}','approved')">Aprovar</button>
+      <button class="tbl-btn tbl-btn-del" onclick="setOrderStatus('${o.id}','rejected')">Rejeitar</button>
+      <button class="tbl-btn tbl-btn-view" onclick="openOrderDetail('${o.id}')">Ver</button>`;
+  }
+  if (status === 'approved') {
+    return `
+      <button class="tbl-btn tbl-btn-ship" onclick="setOrderStatus('${o.id}','shipped')">Enviar</button>
+      <button class="tbl-btn tbl-btn-view" onclick="openOrderDetail('${o.id}')">Ver</button>`;
+  }
+  if (status === 'shipped') {
+    return `
+      <button class="tbl-btn tbl-btn-deliver" onclick="setOrderStatus('${o.id}','delivered')">Entregar</button>
+      <button class="tbl-btn tbl-btn-view" onclick="openOrderDetail('${o.id}')">Ver</button>`;
+  }
+  return `<button class="tbl-btn tbl-btn-view" onclick="openOrderDetail('${o.id}')">Ver</button>`;
+}
+
+updateOrderStatus = async function(id, status) {
+  const orders = getOrders();
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+
+  order.status = status;
+  if (order.payment && typeof order.payment === 'object') {
+    order.payment.status = status;
+  }
+  if (!order.timeline) order.timeline = [null, null, null, null, null];
+  if (!order.timeline[0]) order.timeline[0] = new Date().toISOString();
+
+  const idx = { approved: 1, shipped: 3, delivered: 4 };
+  if (idx[status] !== undefined) {
+    for (let i = 0; i <= idx[status]; i++) {
+      if (!order.timeline[i]) order.timeline[i] = new Date().toISOString();
+    }
+  }
+
+  saveOrders(orders);
+  if (window.FB) await window.FB.updateOrderStatus(id, status);
+  addLog('action', `Pedido #${id} → "${STATUS_CFG[status]?.label}".`);
+  renderOrdersTable(filterState);
+  renderDashboard();
+};
+
+window.setOrderStatus = function(id, status) {
+  updateOrderStatus(id, status);
+  showToast(`Status atualizado: ${STATUS_CFG[status]?.label}`);
+};
+
+window.changeOrderStatus = function(sel) {
+  updateOrderStatus(sel.dataset.orderid, sel.value);
+  sel.className = `status-select ${sel.value}`;
+};
+
+renderDashboard = function() {
+  const orders = getOrders();
+  const products = getAdminProducts();
+  const revenue = orders
+    .filter(o => !['rejected', 'cancelled'].includes(orderStatus(o)))
+    .reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+  document.getElementById('stat-total').textContent = products.length;
+  document.getElementById('stat-orders').textContent = orders.length;
+  document.getElementById('stat-revenue').textContent = revenue > 0 ? fmtP(revenue) : 'R$0';
+  document.getElementById('stat-shipping').textContent = orders.filter(o => orderStatus(o) === 'shipped').length;
+  document.getElementById('badge-orders').textContent = orders.length;
+  updateOrderCounters(orders);
+
+  const tbody = document.getElementById('recent-orders-tbody');
+  if (!tbody) return;
+  const recent = orders.slice().sort((a, b) => orderDate(b) - orderDate(a)).slice(0, 5);
+  tbody.innerHTML = recent.length
+    ? recent.map(o => orderRowHTML(o, false)).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum pedido ainda.</td></tr>';
+};
+
+renderOrdersTable = function(filter = {}) {
+  let orders = getOrders().slice().sort((a, b) => orderDate(b) - orderDate(a));
+  const q = (filter.search || '').toLowerCase();
+  if (q) {
+    orders = orders.filter(o =>
+      String(o.id || '').toLowerCase().includes(q) ||
+      orderCustomerName(o).toLowerCase().includes(q) ||
+      orderCustomerEmail(o).toLowerCase().includes(q)
+    );
+  }
+  if (filter.status) orders = orders.filter(o => orderStatus(o) === filter.status);
+  if (filter.payment) orders = orders.filter(o => orderPaymentMethod(o) === filter.payment);
+
+  updateOrderCounters(getOrders());
+
+  const tbody = document.getElementById('orders-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = orders.length
+    ? orders.map(o => orderRowHTML(o, true)).join('')
+    : '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum pedido encontrado.</td></tr>';
+};
+
+orderRowHTML = function(o, showItems) {
+  const status = orderStatus(o);
+  const paymentMethod = orderPaymentMethod(o);
+  const opts = Object.entries(STATUS_CFG).map(([value, cfg]) =>
+    `<option value="${value}"${status === value ? ' selected' : ''}>${cfg.icon} ${cfg.label}</option>`
+  ).join('');
+  return `<tr>
+    <td><strong style="font-family:var(--font-display);font-size:.88rem">#${o.id}</strong></td>
+    <td><div style="font-weight:600;font-size:.84rem">${orderCustomerName(o)}</div>
+        <div style="font-size:.72rem;color:var(--gray-400)">${orderCustomerEmail(o)}</div></td>
+    <td style="font-size:.78rem;white-space:nowrap">${fmtDt(orderDate(o))}</td>
+    ${showItems ? `<td style="text-align:center">${orderItems(o).reduce((sum, item) => sum + Number(item.qty || 0), 0)}</td>` : ''}
+    <td style="font-weight:700">${fmtP(Number(o.total || 0))}</td>
+    <td style="font-size:.8rem">${PAY_LABEL[paymentMethod] || paymentMethod || '”'}</td>
+    <td><select class="status-select ${status}" data-orderid="${o.id}" onchange="changeOrderStatus(this)">${opts}</select></td>
+    <td><div class="table-actions">${orderActionHTML(o)}</div></td>
+  </tr>`;
+};
+
+window.openOrderDetail = function(id) {
+  const o = getOrders().find(order => order.id === id);
+  if (!o) return;
+  const products = getAdminProducts();
+  const STATUS_PROG = { pending: 0, approved: 1, shipped: 3, delivered: 4, rejected: 0 };
+  document.getElementById('odm-title').textContent = `Pedido #${o.id}`;
+  document.getElementById('odm-date').textContent = fmtDt(orderDate(o));
+  document.getElementById('odm-grid').innerHTML = `
+    <div class="odm-field"><label>Cliente</label><p>${orderCustomerName(o)}</p></div>
+    <div class="odm-field"><label>E-mail</label><p>${orderCustomerEmail(o)}</p></div>
+    <div class="odm-field"><label>Endereço</label><p>${orderAddress(o)}</p></div>
+    <div class="odm-field"><label>Cidade / CEP</label><p>${orderCity(o)} ” ${orderCep(o)}</p></div>
+    <div class="odm-field"><label>Pagamento</label><p>${PAY_LABEL[orderPaymentMethod(o)] || orderPaymentMethod(o) || '”'}</p></div>
+    <div class="odm-field"><label>Total</label><p style="color:var(--crimson);font-size:1.05rem">${fmtP(Number(o.total || 0))}</p></div>`;
+  document.getElementById('odm-items').innerHTML = orderItems(o).map(item => {
+    const prod = products.find(p => String(p.id) === String(item.id));
+    if (!prod) return `<div style="font-size:.82rem;color:var(--gray-400);margin-bottom:6px">Item #${item.id} ×${item.qty}</div>`;
+    return `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+      <img src="${prod.img}" style="width:44px;aspect-ratio:3/4;object-fit:cover;border-radius:2px">
+      <div><div style="font-weight:600;font-size:.85rem">${prod.name}</div>
+           <div style="font-size:.75rem;color:var(--gray-400)">${prod.category} · ×${item.qty} = ${fmtP(Number(prod.price || 0) * Number(item.qty || 0))}</div></div></div>`;
+  }).join('');
+  const done = STATUS_PROG[orderStatus(o)] || 0;
+  document.getElementById('odm-timeline').innerHTML = TL_STEPS.map((step, i) => {
+    const cls = i < done ? 'done' : (i === done ? 'active' : 'pending');
+    const ts = o.timeline && o.timeline[i] ? fmtDt(o.timeline[i]) : '';
+    return `<div class="mini-step ${cls}">
+      <div class="mini-dot ${cls}"></div>
+      <div class="mini-step-text">
+        <strong>${step}</strong>
+        <span>${ts || (cls === 'pending' ? 'Aguardando...' : '')}</span>
+      </div></div>`;
+  }).join('');
+  document.getElementById('order-detail-modal').classList.add('open');
+};
+
+// ── Products ──────────────────────────────────────
+let adminProducts = [];
+let stopProductsListener = null;
+const sameProductId = (a, b) => String(a) === String(b);
+const fallbackProductImg = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=533&fit=crop&q=80';
+
+function normalizeProductAssetPath(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+  if (/^(assets\/|\.\/assets\/|\/assets\/)/i.test(raw)) return raw.replace(/^\.\//, '');
+  return `assets/galeria/${raw.replace(/^\/+/, '')}`;
+}
+
+function normalizeProductCategory(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ['masculino', 'feminino', 'infantil'].includes(normalized) ? normalized : 'masculino';
+}
+
+function normalizeProductRecord(product = {}) {
+  const stockValue = Number(product.stock ?? product.qtd ?? product.qty ?? product.quantity ?? product.estoque ?? 0);
+  const priceValue = Number(product.price ?? 0);
+  const oldPriceValue = Number(product.oldPrice ?? product.old_price ?? product.precoAntigo ?? 0);
+  const sizes = Array.isArray(product.sizes)
+    ? product.sizes.map(size => typeof size === 'string' ? { label: size, available: true } : size).filter(Boolean)
+    : [];
+
+  return {
+    ...product,
+    id: String(product.id ?? `prod-${Date.now()}`),
+    name: String(product.name || '').trim(),
+    category: normalizeProductCategory(product.category),
+    price: Number.isFinite(priceValue) ? priceValue : 0,
+    oldPrice: Number.isFinite(oldPriceValue) && oldPriceValue > 0 ? oldPriceValue : null,
+    stock: Number.isFinite(stockValue) ? Math.max(0, parseInt(stockValue, 10)) : 0,
+    img: normalizeProductAssetPath(product.img) || fallbackProductImg,
+    img2: normalizeProductAssetPath(product.img2 || product.image2 || product.foto2) || null,
+    img3: normalizeProductAssetPath(product.img3 || product.image3 || product.foto3) || null,
+    badge: product.badge ? String(product.badge).trim().toLowerCase() : null,
+    featured: !!product.featured,
+    sizes,
+    description: String(product.description || product.descricao || product.desc || '').trim() || null,
+  };
+}
+
+function getAdminProducts() {
+  return Array.isArray(adminProducts) ? adminProducts : [];
+}
+
+async function refreshAdminProducts(forceRemote = false) {
+  if (!window.FB?.getProducts) {
+    adminProducts = [];
+    renderProductsTable();
+    renderDashboard();
+    if (forceRemote) showToast('Firebase indisponível. Produtos são carregados somente online.', 'error');
+    return adminProducts;
+  }
+
+  let remoteProducts = [];
+  try {
+    remoteProducts = await window.FB.getProducts();
+  } catch (err) {
+    console.error('Falha ao buscar produtos no Firebase:', err);
+  }
+
+  adminProducts = (Array.isArray(remoteProducts) ? remoteProducts : []).map(normalizeProductRecord);
+  renderProductsTable();
+  renderDashboard();
+  return adminProducts;
+}
+
+function initFirebaseProducts() {
+  if (stopProductsListener || !window.FB?.listenProducts) return;
+  stopProductsListener = window.FB.listenProducts(products => {
+    adminProducts = (Array.isArray(products) ? products : []).map(normalizeProductRecord);
+    renderProductsTable();
+    renderDashboard();
+  });
+}
+
+function renderProductsTable() {
+  const tbody = document.getElementById('admin-products-tbody');
+  if (!tbody) return;
+  const products = getAdminProducts();
+  if (!products.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum produto.</td></tr>'; return; }
+  tbody.innerHTML = products.map(p=>`
+    <tr>
+      <td><img class="thumb" src="${p.img}" alt="${p.name}" onerror="this.src='${fallbackProductImg}'"></td>
+      <td>${p.name}</td>
+      <td style="text-transform:capitalize">${p.category}</td>
+      <td>${fmtP(Number(p.price || 0))}</td>
+      <td>${p.oldPrice?fmtP(p.oldPrice):'—'}</td>
+      <td>${Number.isFinite(Number(p.stock)) ? Number(p.stock) : 0}</td>
+      <td>${p.badge?`<span class="badge badge-${p.badge}">${p.badge.toUpperCase()}</span>`:'—'}</td>
+      <td><div class="table-actions">
+        <button class="tbl-btn tbl-btn-edit" data-action="edit" data-id="${String(p.id)}">Editar</button>
+        <button class="tbl-btn tbl-btn-del" data-action="delete" data-id="${String(p.id)}">Remover</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+/* ── Category change: show correct size panel ── */
+document.getElementById('admin-products-tbody')?.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action][data-id]');
+  if (!btn) return;
+  const { action, id } = btn.dataset;
+  if (action === 'edit') window.openEditModal(id);
+  if (action === 'delete') window.deleteProduct(id);
+});
+
+renderProductsTable = function() {
+  const tbody = document.getElementById('admin-products-tbody');
+  if (!tbody) return;
+  const products = getAdminProducts();
+  if (!products.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">Nenhum produto.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = products.map(p => `
+    <tr>
+      <td><img class="thumb" src="${p.img}" alt="${p.name}" onerror="this.src='${fallbackProductImg}'"></td>
+      <td>${p.name}</td>
+      <td style="text-transform:capitalize">${p.category}</td>
+      <td>${fmtP(Number(p.price || 0))}</td>
+      <td>${p.oldPrice ? fmtP(Number(p.oldPrice)) : '—'}</td>
+      <td>${Number.isFinite(Number(p.stock)) ? Number(p.stock) : 0}</td>
+      <td>${p.badge ? `<span class="badge badge-${p.badge}">${p.badge.toUpperCase()}</span>` : '—'}</td>
+      <td><div class="table-actions">
+        <button class="tbl-btn tbl-btn-edit" data-action="edit" data-id="${String(p.id)}">Editar</button>
+        <button class="tbl-btn tbl-btn-del" data-action="delete" data-id="${String(p.id)}">Remover</button>
+      </div></td>
+    </tr>`).join('');
+};
+
+window.deleteProduct = async function(id) {
+  if (!confirm('Remover produto?')) return;
+  if (!window.FB?.deleteProduct) {
+    showToast('Firebase indisponível para remover produto.');
+    return;
+  }
+  const result = await window.FB.deleteProduct(id);
+  if (!result?.ok) {
+    showToast('Falha ao remover produto no Firebase.');
+    return;
+  }
+  adminProducts = getAdminProducts().filter(product => !sameProductId(product.id, id));
+  renderProductsTable();
+  renderDashboard();
+  showToast('Produto removido.');
+  
+  // 📢 Notifica o site em tempo real através de BroadcastChannel
+  if (window.BroadcastChannel) {
+    try {
+      const channel = new BroadcastChannel('lkmodas-products');
+      channel.postMessage({ type: 'product-deleted', id: String(id) });
+      channel.close();
+      addLog('action', `Notificação enviada para o site sobre produto removido: ${id}`);
+    } catch (e) {
+      console.warn('Erro ao notificar site:', e);
+    }
+  }
+};
+
+window.openEditModal = function(id) {
+  const product = getAdminProducts().find(item => sameProductId(item.id, id));
+  if (!product) {
+    showToast('Produto não encontrado.');
+    return;
+  }
+  const m = document.getElementById('edit-modal');
+  m.querySelector('#edit-name').value = product.name;
+  m.querySelector('#edit-price').value = Number(product.price || 0);
+  m.querySelector('#edit-stock').value = Number.isFinite(Number(product.stock)) ? Number(product.stock) : 0;
+  m.querySelector('#edit-old-price').value = product.oldPrice || '';
+  m.querySelector('#edit-category').value = normalizeProductCategory(product.category);
+  m.querySelector('#edit-img').value = product.img || '';
+  m.querySelector('#edit-img2').value = product.img2 || '';
+  m.querySelector('#edit-img3').value = product.img3 || '';
+  const eu1 = m.querySelector('#edit-img-url');  if (eu1) eu1.value = (product.img && !product.img.startsWith('data:')) ? product.img : '';
+  const eu2 = m.querySelector('#edit-img2-url'); if (eu2) eu2.value = (product.img2 && !product.img2.startsWith('data:')) ? product.img2 : '';
+  const eu3 = m.querySelector('#edit-img3-url'); if (eu3) eu3.value = (product.img3 && !product.img3.startsWith('data:')) ? product.img3 : '';
+  [['edit-img','edit-paste-preview-1','edit-paste-zone-1'],
+   ['edit-img2','edit-paste-preview-2','edit-paste-zone-2'],
+   ['edit-img3','edit-paste-preview-3','edit-paste-zone-3']].forEach(([fld,prevId,zoneId]) => {
+    const val = m.querySelector('#'+fld)?.value;
+    const prev = document.getElementById(prevId);
+    const zone = document.getElementById(zoneId);
+    if (val && prev && zone) {
+      prev.querySelector('img').src = val;
+      prev.style.display = 'block';
+      zone.style.borderColor = 'var(--gold,#d4af37)';
+      zone.style.borderStyle = 'solid';
+    } else if (prev && zone) {
+      prev.style.display = 'none';
+      zone.style.borderColor = '#ccc';
+      zone.style.borderStyle = 'dashed';
+    }
+  });
+  m.querySelector('#edit-badge').value = product.badge || '';
+  m.querySelector('#edit-featured').checked = !!product.featured;
+  m.querySelector('#edit-description').value = product.description || '';
+  m.dataset.editId = String(product.id);
+  onCategoryChange('edit');
+  const savedSizes = (product.sizes || []).map(size => String(size?.label || size).toUpperCase());
+  m.querySelectorAll('input[name="edit-sizes"]').forEach(cb => {
+    cb.checked = savedSizes.includes(String(cb.value).toUpperCase());
+  });
+  setTimeout(renderEditPhotoPreview, 50);
+  m.classList.add('open');
+};
+
+document.getElementById('admin-add-form')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  const f = e.target;
+  const checkedSizes = [...f.querySelectorAll('input[name="prod-sizes"]:checked')]
+    .map(cb => ({ label: cb.value, available: true }));
+  const product = normalizeProductRecord({
+    id: `prod-${Date.now()}`,
+    name: f['prod-name'].value.trim(),
+    price: parseFloat(f['prod-price'].value),
+    stock: parseInt(f['prod-stock'].value, 10) || 0,
+    oldPrice: f['prod-old-price'].value ? parseFloat(f['prod-old-price'].value) : null,
+    category: f['prod-category'].value,
+    img: (f['prod-img']?.value || f['prod-img-url']?.value || '').trim() || fallbackProductImg,
+    img2: (f['prod-img2']?.value || f['prod-img2-url']?.value || '').trim() || null,
+    img3: (f['prod-img3']?.value || f['prod-img3-url']?.value || '').trim() || null,
+    badge: f['prod-badge'].value || null,
+    featured: f['prod-featured'].checked,
+    sizes: checkedSizes,
+    description: f['prod-description'].value.trim() || null,
+  });
+  if (!product.name || !product.price || !product.category) {
+    showToast('Preencha os campos obrigatórios!');
+    return;
+  }
+  if (product.stock < 0) {
+    showToast('Estoque não pode ser negativo.');
+    return;
+  }
+  if (!window.FB?.saveProduct) {
+    showToast('Firebase indisponível para salvar produto.');
+    return;
+  }
+  const result = await window.FB.saveProduct(product);
+  if (!result?.ok) {
+    showToast('Produto não foi salvo. Verifique login admin, conexão e regras do Firebase.', 'error');
+    return;
+  }
+  adminProducts = [...getAdminProducts().filter(item => !sameProductId(item.id, result.id || product.id)), { ...product, id: String(result.id || product.id) }];
+  f.reset();
+  clearAddPhotoPreview();
+  onCategoryChange('add');
+  renderProductsTable();
+  renderDashboard();
+  showToast('Produto adicionado! ✅');
+  
+  // 📢 Notifica o site em tempo real através de BroadcastChannel
+  if (window.BroadcastChannel) {
+    try {
+      const channel = new BroadcastChannel('lkmodas-products');
+      channel.postMessage({ type: 'product-added', id: result.id || product.id, name: product.name });
+      channel.close();
+      addLog('action', `Notificação enviada para o site sobre novo produto: "${product.name}"`);
+    } catch (e) {
+      console.warn('Erro ao notificar site:', e);
+    }
+  }
+  
+  switchPanel('products', document.querySelector('[data-panel="products"]'));
+}, true);
+
+document.getElementById('edit-product-form')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  const modal = document.getElementById('edit-modal');
+  const id = String(modal.dataset.editId || '');
+  const products = getAdminProducts();
+  const idx = products.findIndex(product => sameProductId(product.id, id));
+  if (idx === -1) {
+    showToast('Produto não encontrado para edição.');
+    return;
+  }
+  const stockValue = parseInt(document.getElementById('edit-stock').value, 10);
+  if (isNaN(stockValue) || stockValue < 0) {
+    showToast('Estoque deve ser número positivo.');
+    return;
+  }
+  const editedSizes = [...document.querySelectorAll('input[name="edit-sizes"]:checked')]
+    .map(cb => ({ label: cb.value, available: true }));
+  const updatedProduct = normalizeProductRecord({
+    ...products[idx],
+    id,
+    name: document.getElementById('edit-name').value.trim(),
+    price: parseFloat(document.getElementById('edit-price').value),
+    stock: stockValue,
+    oldPrice: document.getElementById('edit-old-price').value ? parseFloat(document.getElementById('edit-old-price').value) : null,
+    category: document.getElementById('edit-category').value,
+    img: document.getElementById('edit-img').value.trim(),
+    img2: document.getElementById('edit-img2').value.trim() || null,
+    img3: document.getElementById('edit-img3').value.trim() || null,
+    badge: document.getElementById('edit-badge').value || null,
+    featured: document.getElementById('edit-featured').checked,
+    sizes: editedSizes,
+    description: document.getElementById('edit-description').value.trim() || null,
+  });
+  if (!updatedProduct.name || !updatedProduct.price) {
+    showToast('Preencha nome e preço corretamente.');
+    return;
+  }
+  if (!window.FB?.saveProduct) {
+    showToast('Firebase indisponível para atualizar produto.');
+    return;
+  }
+  const result = await window.FB.saveProduct(updatedProduct);
+  if (!result?.ok) {
+    showToast('Produto não foi atualizado. Verifique login admin, conexão e regras do Firebase.', 'error');
+    return;
+  }
+  adminProducts = products.map(product => sameProductId(product.id, id) ? { ...updatedProduct, id: String(result.id || id) } : product);
+  modal.classList.remove('open');
+  renderProductsTable();
+  renderDashboard();
+  showToast('Produto atualizado! ✅');
+  
+  // 📢 Notifica o site em tempo real através de BroadcastChannel
+  if (window.BroadcastChannel) {
+    try {
+      const channel = new BroadcastChannel('lkmodas-products');
+      channel.postMessage({ type: 'product-updated', id: String(result.id || id), name: updatedProduct.name });
+      channel.close();
+      addLog('action', `Notificação enviada para o site sobre atualização: "${updatedProduct.name}"`);
+    } catch (e) {
+      console.warn('Erro ao notificar site:', e);
+    }
+  }
+}, true);
+
+window.onCategoryChange = function(ctx) {
+  const cat = document.getElementById(ctx === 'add' ? 'add-prod-category' : 'edit-category')?.value;
+  if (ctx === 'add') {
+    document.getElementById('add-sizes-adult').style.display = ['masculino','feminino'].includes(cat) ? '' : 'none';
+    document.getElementById('add-sizes-kids').style.display  = cat === 'infantil'  ? '' : 'none';
+    document.getElementById('add-sizes-none').style.display  = cat ? 'none' : '';
+  } else {
+    document.getElementById('edit-sizes-adult').style.display = ['masculino','feminino'].includes(cat) ? '' : 'none';
+    document.getElementById('edit-sizes-kids').style.display  = cat === 'infantil'  ? '' : 'none';
+  }
+};
+
+/* ── Photo preview (add form) ── */
+['prod-img','prod-img2','prod-img3'].forEach(name => {
+  document.querySelector(`[name="${name}"]`)?.addEventListener('input', function() {
+    renderAddPhotoPreview();
+  });
+});
+
+function renderAddPhotoPreview() {
+  const f = document.getElementById('admin-add-form');
+  if (!f) return;
+  const preview = document.getElementById('add-photo-preview');
+  if (!preview) return;
+  const urls = [f['prod-img'].value, f['prod-img2']?.value, f['prod-img3']?.value].filter(Boolean);
+  preview.innerHTML = urls.map((u, i) => `
+    <div style="position:relative">
+      <img src="${u}" onerror="this.style.opacity='.2'" style="width:64px;height:80px;object-fit:cover;border-radius:6px;border:2px solid ${i===0?'var(--gold)':'var(--gray-200)'}">
+      <span style="position:absolute;top:-6px;left:-6px;background:${i===0?'var(--gold)':'var(--gray-400)'};color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">${i+1}</span>
+    </div>`).join('');
+}
+
+window.clearAddPhotoPreview = function() {
+  const el = document.getElementById('add-photo-preview');
+  if (el) el.innerHTML = '';
+  // Reset paste zones
+  ['1','2','3'].forEach(n => {
+    const z = document.getElementById('paste-zone-'+n);
+    const p = document.getElementById('paste-preview-'+n);
+    const h = document.querySelector('[name="prod-img'+(n==='1'?'':''+n)+'"]');
+    if (z) z.style.borderColor = '#ccc';
+    if (p) { p.style.display='none'; p.querySelector('img').src=''; }
+    if (h) h.value = '';
+  });
+};
+
+/* ══════════════════════════════════════════════════════
+   SISTEMA DE FOTOS — Ctrl+V · Arquivo · URL · Drag+Drop
+══════════════════════════════════════════════════════ */
+
+function getPhotoHiddenInput(inputName, useId) {
+  return useId ? document.getElementById(inputName) : document.querySelector('[name="' + inputName + '"]');
+}
+
+function getPhotoUrlInput(hiddenInputName, useId) {
+  if (useId) {
+    return document.getElementById(hiddenInputName + '-url');
+  }
+  return document.querySelector('[name="' + hiddenInputName + '-url"]');
+}
+
+function refreshPhotoCollections(useId) {
+  if (useId) {
+    renderEditPhotoPreview();
+  } else {
+    renderAddPhotoPreview();
+  }
+}
+
+function setZoneSelected(zoneId) {
+  const allZones = [
+    'paste-zone-1', 'paste-zone-2', 'paste-zone-3',
+    'edit-paste-zone-1', 'edit-paste-zone-2', 'edit-paste-zone-3'
+  ];
+  allZones.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.outline = id === zoneId ? '2px solid var(--gold,#d4af37)' : 'none';
+  });
+}
+
+/* Aplica imagem (base64 ou URL) numa zona */
+function applyImgToZone(dataUrl, hiddenInputName, zoneId, previewId, useId) {
+  const hidden = getPhotoHiddenInput(hiddenInputName, useId);
+  const zone = document.getElementById(zoneId);
+  const preview = document.getElementById(previewId);
+  const urlInput = getPhotoUrlInput(hiddenInputName, useId);
+  if (!hidden || !zone || !preview) return;
+
+  hidden.value = dataUrl;
+  if (urlInput && dataUrl.startsWith('data:')) {
+    urlInput.value = '';
+  }
+
+  const previewImg = preview.querySelector('img');
+  if (previewImg) previewImg.src = dataUrl;
+  preview.style.display = 'block';
+  zone.style.borderColor = 'var(--gold, #d4af37)';
+  zone.style.borderStyle = 'solid';
+  refreshPhotoCollections(useId);
+  showToast('Foto carregada! ✅');
+}
+
+/* Lê File object e aplica na zona */
+function fileToZone(file, hiddenInputName, zoneId, previewId, useId) {
+  if (!file || !file.type.startsWith('image/')) { showToast('Selecione uma imagem.'); return; }
+  if (file.size > 8 * 1024 * 1024) { showToast('Imagem muito grande. Use até 8MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => applyImgToZone(e.target.result, hiddenInputName, zoneId, previewId, useId);
+  reader.readAsDataURL(file);
+}
+
+/* Botão 📁 */
+window.handleImgFile = function(fileInput, hiddenInputName, zoneId, previewId, useId) {
+  const file = fileInput.files?.[0];
+  if (!file) return;
+  setZoneSelected(zoneId);
+  fileToZone(file, hiddenInputName, zoneId, previewId, useId);
+  fileInput.value = '';
+};
+
+/* URL digitada no input de texto */
+window.syncImgFromUrl = function(urlInput, hiddenInputName, zoneId, previewId, useId) {
+  const url = urlInput.value.trim();
+  const hidden = getPhotoHiddenInput(hiddenInputName, useId);
+  const zone = document.getElementById(zoneId);
+  const prev = document.getElementById(previewId);
+  if (!hidden || !prev) return;
+
+  hidden.value = url;
+  if (!url) {
+    prev.style.display = 'none';
+    if (zone) {
+      zone.style.borderColor = '#ccc';
+      zone.style.borderStyle = 'dashed';
+    }
+    refreshPhotoCollections(useId);
+    return;
+  }
+
+  const img = prev.querySelector('img');
+  img.onload = () => {
+    prev.style.display = 'block';
+    if (zone) {
+      zone.style.borderColor = 'var(--gold,#d4af37)';
+      zone.style.borderStyle = 'solid';
+    }
+    refreshPhotoCollections(useId);
+  };
+  img.onerror = () => {
+    prev.style.display = 'none';
+    if (zone) {
+      zone.style.borderColor = '#ccc';
+      zone.style.borderStyle = 'dashed';
+    }
+    refreshPhotoCollections(useId);
+  };
+  img.src = url;
+};
+
+/* Ctrl+V global — detecta qual zona está focada/ativa */
+(function setupPasteListener() {
+  const zones = [
+    ['prod-img',  'paste-zone-1', 'paste-preview-1', false],
+    ['prod-img2', 'paste-zone-2', 'paste-preview-2', false],
+    ['prod-img3', 'paste-zone-3', 'paste-preview-3', false],
+    ['edit-img',  'edit-paste-zone-1', 'edit-paste-preview-1', true],
+    ['edit-img2', 'edit-paste-zone-2', 'edit-paste-preview-2', true],
+    ['edit-img3', 'edit-paste-zone-3', 'edit-paste-preview-3', true],
+  ];
+
+  let activeZone = null;
+
+  function isEditOpen() {
+    return document.getElementById('edit-modal')?.classList.contains('open');
+  }
+
+  function currentPool() {
+    return isEditOpen() ? zones.slice(3) : zones.slice(0, 3);
+  }
+
+  function resolveTargetZone(preferredZoneId = null) {
+    const pool = currentPool();
+    if (preferredZoneId) {
+      const preferred = pool.find(([, zoneId]) => zoneId === preferredZoneId);
+      if (preferred) return preferred;
+    }
+    return pool.find(([name,,, useId]) => {
+      const el = getPhotoHiddenInput(name, useId);
+      return el && !String(el.value || '').trim();
+    }) || pool[0] || null;
+  }
+
+  function zoneFromFocusedElement(el) {
+    if (!el) return null;
+    const zone = el.closest?.('[id^="paste-zone-"], [id^="edit-paste-zone-"]');
+    if (zone?.id) return zone.id;
+    const id = el.id || '';
+    const name = el.name || '';
+    const map = {
+      'edit-img': 'edit-paste-zone-1',
+      'edit-img2': 'edit-paste-zone-2',
+      'edit-img3': 'edit-paste-zone-3',
+      'edit-img-url': 'edit-paste-zone-1',
+      'edit-img2-url': 'edit-paste-zone-2',
+      'edit-img3-url': 'edit-paste-zone-3',
+      'prod-img-url': 'paste-zone-1',
+      'prod-img2-url': 'paste-zone-2',
+      'prod-img3-url': 'paste-zone-3'
+    };
+    if (map[id]) return map[id];
+    if (name === 'prod-img') return 'paste-zone-1';
+    if (name === 'prod-img2') return 'paste-zone-2';
+    if (name === 'prod-img3') return 'paste-zone-3';
+    if (name === 'prod-img-url') return 'paste-zone-1';
+    if (name === 'prod-img2-url') return 'paste-zone-2';
+    if (name === 'prod-img3-url') return 'paste-zone-3';
+    return null;
+  }
+
+  function getPastedImageFile(clipboardData) {
+    if (!clipboardData) return null;
+
+    const directFiles = Array.from(clipboardData.files || []).find(file => file?.type?.startsWith('image/'));
+    if (directFiles) return directFiles;
+
+    const items = Array.from(clipboardData.items || []);
+    const imageItem = items.find(item => item.type?.startsWith('image/'));
+    if (imageItem?.getAsFile) return imageItem.getAsFile();
+
+    const fileItem = items.find(item => item.kind === 'file' && item.getAsFile?.()?.type?.startsWith('image/'));
+    if (fileItem?.getAsFile) return fileItem.getAsFile();
+
+    return null;
+  }
+
+  function getPastedImageUrl(clipboardData) {
+    if (!clipboardData) return '';
+    const html = clipboardData.getData?.('text/html') || '';
+    const htmlSrc = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] || '';
+    if (/^(https?:\/\/|data:image\/)/i.test(htmlSrc)) return htmlSrc;
+
+    const text = (
+      clipboardData.getData?.('text/uri-list') ||
+      clipboardData.getData?.('text/plain') ||
+      ''
+    ).trim();
+
+    if (/^(https?:\/\/|data:image\/)/i.test(text)) return text;
+    if (/^assets\/galeria\/.+\.(png|jpe?g|webp|gif|avif)$/i.test(text)) return text;
+    if (/^[^\\/:*?"<>|]+\.(png|jpe?g|webp|gif|avif)$/i.test(text)) return 'assets/galeria/' + text;
+    return '';
+  }
+
+  async function readClipboardImageFile() {
+    if (!navigator.clipboard?.read) return null;
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(type => type.startsWith('image/'));
+        if (!imageType) continue;
+        const blob = await item.getType(imageType);
+        const ext = imageType.split('/')[1]?.replace('jpeg', 'jpg') || 'png';
+        return new File([blob], `imagem-colada.${ext}`, { type: imageType });
+      }
+    } catch (err) {
+      return null;
+    }
+    return null;
+  }
+
+  function openFilePickerForPhoto(hiddenInputName) {
+    const candidates = Array.from(document.querySelectorAll('input[type="file"][accept*="image"]'));
+    const picker = candidates.find(input => (input.getAttribute('onchange') || '').includes("'" + hiddenInputName + "'"));
+    if (picker) {
+      setTimeout(() => picker.click(), 0);
+    }
+  }
+
+  async function handlePhotoPaste(e, preferredZoneId = null) {
+    if (e.defaultPrevented) return;
+
+    const target = resolveTargetZone(preferredZoneId || zoneFromFocusedElement(e.target) || zoneFromFocusedElement(document.activeElement) || activeZone);
+    if (!target) return;
+
+    // 1️⃣ Tenta arquivo direto (Ctrl+V de explorador de arquivos — método antigo)
+    const file = getPastedImageFile(e.clipboardData);
+    if (file) {
+      e.preventDefault();
+      setZoneSelected(target[1]);
+      fileToZone(file, target[0], target[1], target[2], target[3]);
+      activeZone = target[1];
+      return;
+    }
+
+    // 2️⃣ Tenta Clipboard API (mais confiável em navegadores modernos)
+    if (navigator.clipboard?.read) {
+      try {
+        e.preventDefault();
+        setZoneSelected(target[1]);
+        const asyncFile = await readClipboardImageFile();
+        if (asyncFile) {
+          fileToZone(asyncFile, target[0], target[1], target[2], target[3]);
+          activeZone = target[1];
+          return;
+        }
+      } catch (err) {
+        // Silenciosamente continua para próximo método
+      }
+    }
+
+    // 3️⃣ Tenta URL colada (links de imagens)
+    const pastedUrl = getPastedImageUrl(e.clipboardData);
+    if (pastedUrl) {
+      e.preventDefault();
+      setZoneSelected(target[1]);
+      applyImgToZone(pastedUrl, target[0], target[1], target[2], target[3]);
+      activeZone = target[1];
+      return;
+    }
+
+    // 4️⃣ Se foi clique em zona e nada funcionou, oferece opção de arquivo
+    if (preferredZoneId || zoneFromFocusedElement(e.target) || zoneFromFocusedElement(document.activeElement)) {
+      e.preventDefault();
+      showToast('Selecione arquivo ou cole a URL da imagem', 'info');
+      openFilePickerForPhoto(target[0]);
+    }
+  }
+
+  zones.forEach(([name, zoneId, previewId, useId]) => {
+    const zone = document.getElementById(zoneId);
+    const preview = document.getElementById(previewId);
+    const urlInput = getPhotoUrlInput(name, useId);
+    if (!zone) return;
+
+    zone.setAttribute('tabindex', '0');
+
+    const activateZone = () => {
+      activeZone = zoneId;
+      setZoneSelected(zoneId);
+    };
+
+    zone.addEventListener('click', activateZone);
+    zone.addEventListener('focus', activateZone);
+    preview?.addEventListener('click', activateZone);
+    zone.addEventListener('paste', e => handlePhotoPaste(e, zoneId));
+    urlInput?.addEventListener('focus', activateZone);
+    urlInput?.addEventListener('paste', e => handlePhotoPaste(e, zoneId));
+
+    // 🎯 Drag over
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      activateZone();
+      zone.style.borderColor = 'var(--crimson, #c41e3a)';
+      zone.style.borderWidth = '3px';
+      zone.style.backgroundColor = 'rgba(196, 30, 58, 0.05)';
+    });
+
+    // 🎯 Drag leave
+    zone.addEventListener('dragleave', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const hidden = getPhotoHiddenInput(name, useId);
+      zone.style.borderColor = hidden?.value ? 'var(--gold,#d4af37)' : '#ccc';
+      zone.style.borderWidth = '2px';
+      zone.style.borderStyle = hidden?.value ? 'solid' : 'dashed';
+      zone.style.backgroundColor = hidden?.value ? 'rgba(212, 175, 55, 0.02)' : 'transparent';
+    });
+
+    // 🎯 Drop
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      activateZone();
+      const file = e.dataTransfer?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        fileToZone(file, name, zoneId, previewId, useId);
+      } else if (file) {
+        showToast('⚠️ Selecione um arquivo de imagem', 'error');
+      } else {
+        // Tenta pegar URL do drag-drop HTML5
+        const html = e.dataTransfer?.getData('text/html');
+        const url = html?.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
+        if (url) {
+          applyImgToZone(url, name, zoneId, previewId, useId);
+        }
+      }
+    });
+  });
+
+  document.addEventListener('paste', e => {
+    const activeElement = document.activeElement;
+    const focusedZone = zoneFromFocusedElement(activeElement);
+    const hasPhotoPayload = !!getPastedImageFile(e.clipboardData) || !!getPastedImageUrl(e.clipboardData);
+    if (!focusedZone && !activeZone && !hasPhotoPayload) return;
+    handlePhotoPaste(e, focusedZone || null);
+  });
+})();
+
+/* ── Photo preview (edit modal) ── */
+['edit-img','edit-img2','edit-img3'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', renderEditPhotoPreview);
+});
+
+function renderEditPhotoPreview() {
+  const preview = document.getElementById('edit-photo-preview');
+  if (!preview) return;
+  const urls = [
+    document.getElementById('edit-img')?.value,
+    document.getElementById('edit-img2')?.value,
+    document.getElementById('edit-img3')?.value,
+  ].filter(Boolean);
+  preview.innerHTML = urls.map((u, i) => `
+    <div style="position:relative">
+      <img src="${u}" onerror="this.style.opacity='.2'" style="width:56px;height:70px;object-fit:cover;border-radius:6px;border:2px solid ${i===0?'var(--gold)':'var(--gray-200)'}">
+      <span style="position:absolute;top:-6px;left:-6px;background:${i===0?'var(--gold)':'var(--gray-400)'};color:white;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${i+1}</span>
+    </div>`).join('');
+}
+
+// ── Security panel ────────────────────────────────
+function renderSecurityLog() {
+  const el = document.getElementById('security-log');
+  if (!el) return;
+  const log = gget(SECURITY_LOG_KEY, []);
+  const icons = { success:'✅', fail:'❌', action:'ℹ️' };
+  el.innerHTML = log.length
+    ? log.map(l=>`<div class="log-item log-${l.type}">
+        <span class="log-icon">${icons[l.type]||'•'}</span>
+        <div><div>${l.msg}</div><div class="log-time">${fmtDt(l.time)}</div></div>
+      </div>`).join('')
+    : '<div style="text-align:center;padding:32px;color:var(--gray-400);font-size:.85rem">Nenhum log registrado.</div>';
+}
+
+document.getElementById('btn-save-security')?.addEventListener('click', () => {
+  const email   = document.getElementById('sec-email').value.trim();
+  const pass    = document.getElementById('sec-pass').value;
+  const confirm = document.getElementById('sec-pass-confirm').value;
+  const timeout = parseInt(document.getElementById('sec-timeout').value);
+  if (pass && pass !== confirm) { showToast('As senhas não coincidem!'); return; }
+  if (pass && pass.length < 8)  { showToast('Senha precisa ter pelo menos 8 caracteres!'); return; }
+  const current = getCreds();
+  gset(ADMIN_CREDS_KEY, { email: email||current.email, password: pass||current.password });
+  gset('lkmodas_admin_timeout', timeout);
+  addLog('action','Configurações de segurança atualizadas.');
+  showToast('Configurações salvas! ✅');
+});
+
+document.getElementById('btn-clear-log')?.addEventListener('click', () => {
+  if (!confirm('Limpar log de acesso?')) return;
+  gset(SECURITY_LOG_KEY, []);
+  renderSecurityLog();
+});
+
+document.getElementById('btn-force-logout')?.addEventListener('click', () => {
+  if (!confirm('Encerrar todas as sessões?')) return;
+  gset(ADMIN_SESSION_KEY, null);
+  addLog('action','Logout forçado de todas as sessões.');
+  showToast('Sessões encerradas. Recarregando...');
+  setTimeout(() => location.reload(), 1200);
+});
+
+// ── Orders filters ────────────────────────────────
+let filterState = {};
+document.getElementById('order-search')?.addEventListener('input', e => { filterState.search=e.target.value; renderOrdersTable(filterState); });
+document.getElementById('order-filter-status')?.addEventListener('change', e => { filterState.status=e.target.value; renderOrdersTable(filterState); });
+document.getElementById('order-filter-payment')?.addEventListener('change', e => { filterState.payment=e.target.value; renderOrdersTable(filterState); });
+document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
+  filterState = {};
+  ['order-search','order-filter-status','order-filter-payment'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  renderOrdersTable({});
+});
+
+// ── Modal close ───────────────────────────────────
+document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+}));
+document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', e => {
+  if (e.target === overlay) overlay.classList.remove('open');
+}));
+</script>
+</body>
+</html>

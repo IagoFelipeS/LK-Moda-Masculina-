@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="LK Moda Masculina Logo" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="auth-layout">
+  <!-- VISUAL -->
+  <div class="auth-visual">
+    <div class="logo-big">LK<span> </span>Moda Masculina</div>
+    <p>Faça login para acessar sua conta, ver seus pedidos e muito mais.</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="auth-form-wrap">
+    <h2>Bem-vindo(a) de volta</h2>
+    <p class="sub">Acesse sua conta LK Moda Masculina</p>
+
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail</label>
+        <input class="form-input" type="email" id="email" name="email" placeholder="seu@email.com" autocomplete="email">
+        <p class="form-error" id="email-error"></p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Senha</label>
+        <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password">
+        <p class="form-error" id="pass-error"></p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="color:var(--gold);">Entrar</button>
+    </form>
+
+    <div class="divider">ou</div>
+    <p class="form-footer">Não tem conta? <a href="cadastro.html">Criar conta gratuita</a></p>
+  </div>
+</div>
+
+<div class="toast"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

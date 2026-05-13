@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmar Pagamento — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+  <style>
+    .payment-container {
+      max-width: 620px;
+      margin: 40px auto;
+      padding: 0 20px 60px;
+    }
+    .payment-card {
+      border: 1px solid var(--gray-200, #e5e7eb);
+      border-radius: 12px;
+      padding: 32px;
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    /* Status */
+    .payment-status { text-align: center; margin-bottom: 28px; }
+    .status-icon { font-size: 3.2rem; margin-bottom: 12px; display: block; }
+    .status-pending  { color: #f39c12; }
+    .status-approved { color: #27ae60; }
+    .status-title   { font-size: 1.45rem; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+    .status-message { color: #6b7280; font-size: 0.95rem; }
+
+    /* Pix card */
+    .pix-card { border: 2px solid #009ee3; border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+    .pix-card-header {
+      background: #009ee3; color: white;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; font-weight: 700; font-size: 1rem;
+    }
+    .pix-card-body { padding: 22px 18px; }
+
+    .pix-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+    .pix-step  { display: flex; align-items: flex-start; gap: 12px; font-size: 0.9rem; color: #374151; }
+    .step-num  {
+      background: #009ee3; color: white; border-radius: 50%;
+      width: 22px; height: 22px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700;
+    }
+
+    /* QR Code */
+    .qr-wrapper {
+      display: flex; flex-direction: column; align-items: center;
+      background: #f8fafc; border: 1.5px dashed #009ee3;
+      border-radius: 10px; padding: 22px; margin-bottom: 20px;
+    }
+    .qr-wrapper canvas, .qr-wrapper img { border-radius: 6px; }
+    .qr-label { margin-top: 12px; font-size: 0.78rem; color: #6b7280; text-align: center; }
+
+    /* Copy-paste code */
+    .copy-box { background: #f1f5f9; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+    .copy-box-label { font-size: 0.78rem; font-weight: 600; color: #374151; margin-bottom: 8px; display: block; }
+    .copy-row  { display: flex; gap: 8px; align-items: stretch; }
+    .copy-code {
+      flex: 1; font-family: monospace; font-size: 0.7rem;
+      background: white; border: 1px solid #d1d5db; border-radius: 6px;
+      padding: 8px 10px; word-break: break-all; color: #1e293b;
+      line-height: 1.4; max-height: 64px; overflow: hidden;
+    }
+    .btn-copy {
+      background: #009ee3; color: white; border: none; border-radius: 6px;
+      padding: 8px 14px; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+      white-space: nowrap; flex-shrink: 0; transition: background 0.2s;
+    }
+    .btn-copy:hover  { background: #007ab8; }
+    .btn-copy.copied { background: #27ae60; }
+
+    /* Pix key */
+    .pix-key-box {
+      background: #f0fdf4; border: 1.5px solid #86efac;
+      border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; text-align: center;
+    }
+    .pix-key-box .key-label { font-size: 0.78rem; color: #6b7280; margin-bottom: 4px; }
+    .pix-key-box .key-value { font-size: 1rem; font-weight: 700; color: #15803d; letter-spacing: 1px; margin-bottom: 4px; }
+    .pix-key-box .key-owner { font-size: 0.78rem; color: #6b7280; }
+
+    /* Bank info */
+    .bank-info-box { background: #f8fafc; border-radius: 8px; padding: 14px 16px; margin-top: 16px; font-size: 0.83rem; }
+    .bank-info-box h4 { font-size: 0.85rem; color: #374151; margin: 0 0 10px 0; }
+    .bank-row { display: flex; justify-content: space-between; margin-bottom: 6px; gap: 8px; }
+    .bank-row span:first-child { color: #6b7280; flex-shrink: 0; }
+    .bank-row span:last-child  { font-weight: 600; text-align: right; word-break: break-word; }
+
+    /* Order info */
+    .order-info { background: #f8fafc; border-radius: 8px; padding: 16px; margin-bottom: 22px; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 9px; font-size: 0.93rem; gap: 8px; }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-label { color: #6b7280; flex-shrink: 0; }
+    .info-value { font-weight: 600; text-align: right; }
+
+    /* Timer */
+    .pix-timer { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.82rem; color: #6b7280; margin-top: 14px; }
+    .timer-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: blink 1.2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    /* Approved */
+    .approved-banner {
+      display: none; background: #d1fae5; border: 1.5px solid #34d399;
+      border-radius: 8px; padding: 16px; margin-bottom: 22px;
+      text-align: center; color: #065f46; font-weight: 600;
+    }
+
+    /* Card section */
+    .card-info-box { background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0; }
+
+    .security-note { text-align: center; font-size: 0.78rem; color: #9ca3af; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <div class="header-actions">
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero">
+  <h1 style="color:var(--gold);">Confirmar Pagamento</h1>
+  <p>Finalize seu pedido realizando o pagamento abaixo</p>
+</section>
+
+<div class="container">
+  <div class="payment-container">
+    <div class="payment-card">
+
+      <!-- APPROVED BANNER -->
+      <div class="approved-banner" id="approvedBanner">
+        ✅ Pagamento confirmado! Seu pedido foi aprovado. Redirecionando...
+      </div>
+
+      <!-- STATUS -->
+      <div class="payment-status">
+        <span class="status-icon status-pending" id="statusIcon">⏳</span>
+        <div class="status-title"   id="statusTitle">Aguardando Pagamento</div>
+        <div class="status-message" id="statusMessage">Complete o pagamento abaixo para confirmar seu pedido</div>
+      </div>
+
+      <!-- ORDER INFO -->
+      <div class="order-info">
+        <div class="info-row">
+          <span class="info-label">Pedido</span>
+          <span class="info-value" id="orderId">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Valor Total</span>
+          <span class="info-value" id="orderAmount" style="color:#dc2626;font-size:1.05rem">R$ 0,00</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Forma de Pagamento</span>
+          <span class="info-value" id="paymentMethodLabel">—</span>
+        </div>
+      </div>
+
+      <!-- ── PIX SECTION ── -->
+      <div id="pixSection" style="display:none">
+        <div class="pix-card">
+          <div class="pix-card-header">
+            <svg width="26" height="26" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32.5 7.5L40.5 15.5L32.5 23.5L24.5 15.5L32.5 7.5Z" fill="white"/>
+              <path d="M15.5 24.5L7.5 32.5L15.5 40.5L23.5 32.5L15.5 24.5Z" fill="rgba(255,255,255,0.7)"/>
+              <path d="M15.5 7.5L7.5 15.5L15.5 23.5L23.5 15.5L15.5 7.5Z" fill="rgba(255,255,255,0.7)"/>
+              <path d="M32.5 24.5L24.5 32.5L32.5 40.5L40.5 32.5L32.5 24.5Z" fill="white"/>
+            </svg>
+            Pagar via Pix — Instantâneo e Seguro
+          </div>
+
+          <div class="pix-card-body">
+            <div class="pix-steps">
+              <div class="pix-step"><span class="step-num">1</span><span>Abra o app do seu banco e acesse a área <strong>Pix</strong></span></div>
+              <div class="pix-step"><span class="step-num">2</span><span>Escaneie o QR Code <strong>ou</strong> use o código <strong>Copia e Cola</strong></span></div>
+              <div class="pix-step"><span class="step-num">3</span><span>Verifique os dados, confirme o <strong>valor exato</strong> e finalize</span></div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="qr-wrapper">
+              <div id="qrCode"></div>
+              <span class="qr-label">Escaneie com a câmera do app do seu banco</span>
+            </div>
+
+            <!-- Copia e Cola -->
+            <div class="copy-box">
+              <span class="copy-box-label">📋 Pix Copia e Cola</span>
+              <div class="copy-row">
+                <div class="copy-code" id="pixCopyCode">Gerando código...</div>
+                <button class="btn-copy" id="btnCopy" onclick="copiarPix()">Copiar</button>
+              </div>
+            </div>
+
+            <!-- Pix key -->
+            <div class="pix-key-box">
+              <div class="key-label">Chave Pix (Telefone)</div>
+              <div class="key-value">+55 16 99360-3482</div>
+              <div class="key-owner">Titular: 27.811.253 LEANDRO MARTINZ QUERINO</div>
+            </div>
+
+            <!-- Bank info -->
+            <div class="bank-info-box">
+              <h4>🏦 Dados bancários do recebedor</h4>
+              <div class="bank-row"><span>Banco</span><span>PagBank — PagSeguro (290)</span></div>
+              <div class="bank-row"><span>Agência</span><span>0001</span></div>
+              <div class="bank-row"><span>Conta</span><span>17907044-6 (Conta de Pagamento)</span></div>
+              <div class="bank-row"><span>CNPJ</span><span>27.811.253/0001-00</span></div>
+              <div class="bank-row"><span>Titular</span><span>27.811.253 LEANDRO MARTINZ QUERINO</span></div>
+            </div>
+
+            <div class="pix-timer">
+              <span class="timer-dot"></span>
+              <span>Verificando aprovação automaticamente a cada 5 segundos...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD SECTION ── -->
+      <div id="cardSection" style="display:none">
+        <div class="card-info-box">
+          <p style="font-weight:700;margin-bottom:10px">💳 Cartão de Crédito</p>
+          <p style="margin-bottom:6px">Últimos dígitos: <strong id="cardLast4">****</strong></p>
+          <p>Parcelamento: <strong id="installmentDisplay">1x sem juros</strong></p>
+        </div>
+        <p style="font-size:0.88rem;color:#6b7280;margin-bottom:16px">
+          Seu pagamento está sendo processado com segurança. Você receberá a confirmação em breve.
+        </p>
+      </div>
+
+      <p class="security-note">🔒 Conexão segura · Pix via Banco Central do Brasil (BCB) · Padrão EMV</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2026 LK Moda Masculina. Todos os direitos reservados.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ================================================================
+   PIX ESTÁTICO — LK MODAS
+   Chave: +5516993603482 (telefone, formato E.164)
+   Titular: 27.811.253 LEANDRO MARTINZ QUERINO
+   Banco: PagBank/PagSeguro (290) · Ag 0001 · CC 17907044-6
+
+   Padrão: BCB EMV CoC — QR Code Estático
+   Spec: https://www.bcb.gov.br/content/estabilidadefinanceira/
+         forumpagamentos/RPix-3-Fluxo-QR-Code-Especificacao-
+         Tecnica-do-Payload.pdf
+
+   Correções aplicadas:
+   ✓ Campo 01 (Point of Initiation) OMITIDO — obrigatório para QR
+     estático reutilizável com chave de telefone
+   ✓ Chave telefone em formato E.164: +5516993603482
+   ✓ TXID = "***" no campo 62/05 (padrão para QR estático)
+   ✓ CRC-16/CCITT calculado sobre toda a string incluindo "6304"
+================================================================ */
+
+const PIX_KEY      = '+5516993603482';   // E.164 — obrigatório para chave telefone
+const PIX_MERCHANT = 'LK MODAS';        // max 25 chars, sem acentos
+const PIX_CITY     = 'BRODOWSKI';       // max 15 chars, sem acentos
+
+let currentOrderId = null;
+let checkInterval  = null;
+let pixPayload     = '';
+let orderListenerUnsubscribe = null;
+let latestOrder = null;
+
+function syncOrderCache(updatedOrder) {
+  if (!updatedOrder || !updatedOrder.id) return;
+  latestOrder = { ...updatedOrder };
+}
+
+function waitForFirebaseOrders(timeout = 8000) {
+  if (window.FB?.getOrder) return Promise.resolve(true);
+  return new Promise(resolve => {
+    let done = false;
+    const finish = value => {
+      if (done) return;
+      done = true;
+      resolve(value);
+    };
+    window.addEventListener('firebase-ready', () => finish(!!window.FB?.getOrder), { once: true });
+    setTimeout(() => finish(!!window.FB?.getOrder), timeout);
+  });
+}
+
+function handleApprovedOrder(order) {
+  if (!order || order.status !== 'approved') return;
+
+  syncOrderCache(order);
+  clearInterval(checkInterval);
+
+  if (typeof orderListenerUnsubscribe === 'function') {
+    orderListenerUnsubscribe();
+    orderListenerUnsubscribe = null;
+  }
+
+  document.getElementById('approvedBanner').style.display = 'block';
+  document.getElementById('statusIcon').textContent        = 'âœ…';
+  document.getElementById('statusIcon').className         = 'status-icon status-approved';
+  document.getElementById('statusTitle').textContent       = 'Pagamento Confirmado!';
+  document.getElementById('statusMessage').textContent     = 'Seu pedido foi aprovado com sucesso.';
+  document.getElementById('pixSection').style.display      = 'none';
+  document.getElementById('cardSection').style.display     = 'none';
+
+  setTimeout(() => {
+    window.location.href = 'minha-conta.html?order=' + currentOrderId;
+  }, 3000);
+}
+
+/* ── TLV encoder ─────────────────────────────────────────────── */
+function tlv(id, value) {
+  const s = String(value);
+  return id + s.length.toString().padStart(2, '0') + s;
+}
+
+/* ── CRC-16/CCITT-FALSE (poly=0x1021, init=0xFFFF, no reflect) ─ */
+function crc16(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000)
+        ? ((crc << 1) ^ 0x1021) & 0xFFFF
+        : (crc << 1) & 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+/* ── Build static Pix payload (BCB EMV spec) ─────────────────── */
+function buildPixPayload(amountStr) {
+  /*
+   * Static QR Code rules (BCB):
+   *  - Field 00 = "01"  (payload format indicator)
+   *  - Field 01 ABSENT  (absence = static / reusable)
+   *  - Field 26/00 = "BR.GOV.BCB.PIX"
+   *  - Field 26/01 = chave Pix (E.164 for phone: +55XXXXXXXXXX)
+   *  - Field 52 = "0000" (MCC generic)
+   *  - Field 53 = "986"  (BRL)
+   *  - Field 54 = amount as "0.00" string
+   *  - Field 58 = "BR"
+   *  - Field 59 = merchant name (max 25, ASCII, no accents)
+   *  - Field 60 = merchant city (max 15, ASCII, no accents)
+   *  - Field 62/05 = "***" (TXID placeholder for static)
+   *  - Field 63 = CRC16 (4 hex chars, calculated over entire string
+   *               including the "6304" header)
+   */
+
+  // Field 26: Merchant Account Information
+  const f26 = tlv('26',
+    tlv('00', 'BR.GOV.BCB.PIX') +
+    tlv('01', PIX_KEY)
+  );
+
+  // Field 62: Additional Data (TXID = "***" for static QR)
+  const f62 = tlv('62', tlv('05', '***'));
+
+  // Assemble payload WITHOUT field 01
+  let p = '';
+  p += tlv('00', '01');           // Payload Format Indicator
+  // NO field 01 here — its absence signals "static / reusable QR"
+  p += f26;                        // Merchant Account Info (Pix key)
+  p += tlv('52', '0000');          // Merchant Category Code
+  p += tlv('53', '986');           // Transaction Currency (BRL)
+  p += tlv('54', amountStr);       // Transaction Amount
+  p += tlv('58', 'BR');            // Country Code
+  p += tlv('59', PIX_MERCHANT);   // Merchant Name
+  p += tlv('60', PIX_CITY);       // Merchant City
+  p += f62;                        // Additional Data Field
+  p += '6304';                     // CRC field header (no value yet)
+
+  return p + crc16(p);             // Append 4-char CRC
+}
+
+/* ── Page initialisation ─────────────────────────────────────── */
+async function initPage() {
+  const orderParam = new URLSearchParams(window.location.search).get('order');
+  currentOrderId = orderParam || null;
+  if (!currentOrderId) { window.location.href = 'carrinho.html'; return; }
+
+  await waitForFirebaseOrders();
+  const orderData = window.FB?.getOrder ? await window.FB.getOrder(currentOrderId) : null;
+  if (!orderData) { window.location.href = 'carrinho.html'; return; }
+  syncOrderCache(orderData);
+
+  document.getElementById('orderId').textContent =
+    orderData.id;
+  document.getElementById('orderAmount').textContent =
+    'R$ ' + Number(orderData.total || 0).toFixed(2).replace('.', ',');
+  document.getElementById('paymentMethodLabel').textContent =
+    orderData.paymentMethod === 'pix'    ? '⚡ Pix' :
+    orderData.paymentMethod === 'cartao' ? '💳 Cartão de Crédito' :
+                                           '—';
+
+  if (orderData.paymentMethod === 'pix') {
+    document.getElementById('pixSection').style.display  = 'block';
+    document.getElementById('cardSection').style.display = 'none';
+    renderPix(orderData.total);
+  } else {
+    document.getElementById('pixSection').style.display  = 'none';
+    document.getElementById('cardSection').style.display = 'block';
+    document.getElementById('cardLast4').textContent      = orderData.cardLast4 || '****';
+    document.getElementById('installmentDisplay').textContent =
+      orderData.installments || '1x sem juros';
+  }
+
+  checkStatus();
+  checkInterval = setInterval(checkStatus, 5000);
+
+  if (window.FB?.listenOrder) {
+    orderListenerUnsubscribe = window.FB.listenOrder(currentOrderId, order => {
+      syncOrderCache(order);
+      handleApprovedOrder(order);
+    });
+  }
+}
+
+/* ── Render QR Code + copy-paste field ──────────────────────── */
+function renderPix(total) {
+  // Format amount: "99.90" — no thousands separator, always 2 decimal places
+  const amountStr = total.toFixed(2);
+  pixPayload = buildPixPayload(amountStr);
+
+  // Populate copy-paste field
+  document.getElementById('pixCopyCode').textContent = pixPayload;
+
+  // Render QR Code
+  const container = document.getElementById('qrCode');
+  container.innerHTML = '';
+  try {
+    new QRCode(container, {
+      text:         pixPayload,
+      width:        230,
+      height:       230,
+      colorDark:    '#000000',
+      colorLight:   '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch (err) {
+    container.innerHTML =
+      '<p style="color:#dc2626;font-size:.85rem;text-align:center;padding:20px">' +
+      'Erro ao gerar QR Code.<br>Use o código Copia e Cola abaixo.</p>';
+    console.error('QRCode generation error:', err);
+  }
+}
+
+/* ── Copy to clipboard ───────────────────────────────────────── */
+function copiarPix() {
+  const text = pixPayload || document.getElementById('pixCopyCode').textContent;
+  const btn  = document.getElementById('btnCopy');
+
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(fallback);
+  } else {
+    fallback();
+  }
+
+  btn.textContent = '✓ Copiado!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2500);
+}
+
+/* ── Poll for admin approval every 5s ───────────────────────── */
+function checkStatus() {
+  const order = latestOrder;
+
+  if (order && order.status === 'approved') {
+    clearInterval(checkInterval);
+
+    document.getElementById('approvedBanner').style.display = 'block';
+    document.getElementById('statusIcon').textContent        = '✅';
+    document.getElementById('statusIcon').className         = 'status-icon status-approved';
+    document.getElementById('statusTitle').textContent       = 'Pagamento Confirmado!';
+    document.getElementById('statusMessage').textContent     = 'Seu pedido foi aprovado com sucesso.';
+    document.getElementById('pixSection').style.display      = 'none';
+    document.getElementById('cardSection').style.display     = 'none';
+
+    setTimeout(() => {
+      window.location.href = 'minha-conta.html?order=' + currentOrderId;
+    }, 3000);
+  }
+}
+
+function checkStatus() {
+  const order = latestOrder;
+  if (order?.id === currentOrderId) handleApprovedOrder(order);
+}
+
+document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>

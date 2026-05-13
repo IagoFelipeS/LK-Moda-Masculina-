@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --primary:#1f7a63;
+  --primary-dark:#17624f;
+  --bg:#f3f4f6;
+  --white:#fff;
+  --border:#e5e7eb;
+  --danger:#ef4444;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 25px;
+  background:var(--white);
+  border-bottom:1px solid var(--border);
+}
+
+.header a{
+  text-decoration:none;
+  background:var(--primary);
+  color:white;
+  padding:8px 12px;
+  border-radius:6px;
+  margin-left:5px;
+}
+
+/* CONTAINER */
+.container{
+  height:calc(100vh - 60px);
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+}
+
+/* INPUT */
+input{
+  padding:10px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  margin-bottom:8px;
+}
+
+/* BOTÕES */
+button{
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  background:var(--primary);
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{
+  background:var(--primary-dark);
+}
+
+/* LISTAS */
+.lista{
+  flex:1;
+  overflow:auto;
+}
+
+/* PRODUTO */
+.produto{
+  display:flex;
+  justify-content:space-between;
+  padding:6px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+
+/* ITEM CARRINHO */
+.item{
+  display:flex;
+  justify-content:space-between;
+  padding:6px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+
+/* TOTAL */
+.total{
+  font-size:26px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+/* BOTÃO REMOVER */
+.btn-remove{
+  background:var(--danger);
+}

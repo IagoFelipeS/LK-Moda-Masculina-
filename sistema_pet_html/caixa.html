@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Caixa</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <h2>🧾 Caixa</h2>
+  <div>
+    <a href="cadastro.html">Cadastro</a>
+    <a href="relatorio.html">Relatório</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <input id="codigo" placeholder="Código (ENTER)" onkeypress="enterAdd(event)">
+  <button onclick="buscar()">Adicionar</button>
+
+  <div class="lista" id="carrinho"></div>
+
+  <div class="total">R$ <span id="total">0.00</span></div>
+
+  <button onclick="finalizar()">Finalizar</button>
+  <button class="btn-remove" onclick="limpar()">Limpar</button>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+const carrinhoDiv = document.getElementById("carrinho");
+const totalSpan = document.getElementById("total");
+const codigo = document.getElementById("codigo");
+
+renderCarrinho();
+</script>
+
+</body>
+</html>

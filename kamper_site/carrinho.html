@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrinho — LK Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="top-bar">
+  🚚 Frete grátis nas compras acima de <span>R$ 300</span> · Use o cupom <span>LKMODA10</span> e ganhe 10% OFF
+</div>
+
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="LK Moda Masculina Logo" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="produtos.html">Produtos</a></li>
+        <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+        <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <a href="minha-conta.html" class="user-btn" id="minha-conta-btn" style="text-decoration:none">👤 Minha Conta</a>
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+      <button class="mobile-menu-btn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <button class="close-btn">✕</button>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="produtos.html">Todos os Produtos</a></li>
+    <li><a href="minha-conta.html">👤 Minha Conta</a></li>
+    <li><a href="carrinho.html">Carrinho</a></li>
+    <li><a href="login.html">Entrar / Cadastrar</a></li>
+  </ul>
+</nav>
+
+<section class="page-hero">
+  <h1 style="color:var(--gold);">Seu Carrinho</h1>
+  <p>Revise seus itens e finalize a compra</p>
+</section>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Home</a>
+    <span>/</span>
+    <span>Carrinho</span>
+  </div>
+
+  <!-- CART EMPTY STATE -->
+  <div id="cart-empty" style="display:none" class="cart-empty">
+    <div class="icon">🛒</div>
+    <h3>Seu carrinho está vazio</h3>
+    <p>Adicione produtos para continuar comprando</p>
+    <a href="produtos.html" class="btn btn-primary">Explorar Produtos</a>
+  </div>
+
+  <!-- CART LAYOUT -->
+  <div class="cart-layout">
+    <div>
+      <div class="cart-items-header">
+        <span>Produto</span>
+        <span>Total</span>
+      </div>
+      <div id="cart-container"></div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="cart-summary">
+      <h3>Resumo do Pedido</h3>
+      <div class="summary-line">
+        <span>Subtotal</span>
+        <span id="summary-subtotal">R$ 0,00</span>
+      </div>
+      <div class="summary-line">
+        <span>Frete</span>
+        <span id="summary-shipping">—</span>
+      </div>
+      <div class="summary-line total">
+        <span>Total</span>
+        <span class="val" id="summary-total">R$ 0,00</span>
+      </div>
+      <a href="checkout.html" class="btn btn-crimson btn-full" style="margin-top:24px">
+        Finalizar Compra →
+      </a>
+      <a href="produtos.html" class="btn btn-outline btn-full" style="margin-top:12px;color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">
+        Continuar Comprando
+      </a>
+      <p style="font-size:.75rem;color:rgba(255,255,255,.3);text-align:center;margin-top:16px">
+        🔒 Pagamento 100% seguro
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2026 LK Moda Masculina. Todos os direitos reservados.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

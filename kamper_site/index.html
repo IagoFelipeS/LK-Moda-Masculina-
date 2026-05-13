@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LK — Moda Masculina</title>
+  <link rel="stylesheet" href="style.css">
+  
+  </head>
+<body>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  🚚 Frete grátis nas compras acima de <span>R$ 300</span> · Use o cupom <span>LKMODA10</span> e ganhe 10% OFF
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="container header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" alt="LK Moda Masculina Logo" class="logo-icon">
+      <span class="logo-text">LK<span class="dot"> </span><em>Moda Masculina</em></span>
+    </a>
+    <nav>
+      <ul>
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="produtos.html">Produtos</a></li>
+        
+        <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+        <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <button class="user-btn">Entrar</button>
+      <a href="carrinho.html" class="cart-btn">
+        🛒 Carrinho
+        <span class="cart-count" style="display:none">0</span>
+      </a>
+      <button class="mobile-menu-btn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <button class="close-btn">✕</button>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="produtos.html">Todos os Produtos</a></li>
+   
+    <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+    <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+    <li><a href="carrinho.html">Carrinho</a></li>
+    <li><a href="login.html">Entrar / Cadastrar</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-pattern"></div>
+  <div class="hero-img-col">
+    <img src="assets/hero-modelo.svg" alt="Campanha LK Moda Masculina" class="hero-img">
+  </div>
+  <div class="container">
+    <div class="hero-content">
+      <h1>O basico que não sai de moda</h1>
+      <p>Descubra peças únicas que expressam quem você é. Moda acessível com elegância que faz a diferença.</p>
+      <div class="hero-cta">
+        <a href="produtos.html" class="btn btn-crimson">Ver Coleção</a>
+       
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">Rolar</div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="categories-strip">
+  <div class="cat-grid">
+    
+      </div>
+    </a>
+    <a href="produtos.html?categoria=masculino" class="cat-card">
+      <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=600&h=400&fit=crop&q=80" alt="Masculino">
+      <div class="cat-card-label">
+        <h3>Masculino</h3>
+        <span>Ver Coleção →</span>
+      </div>
+    </a>
+    <a href="produtos.html?categoria=infantil" class="cat-card">
+      <img src="https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=600&h=400&fit=crop&q=80" alt="Infantil">
+      <div class="cat-card-label">
+        <h3>Infantil</h3>
+        <span>Ver Coleção →</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- NOVIDADES -->
+<section class="products-section">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Novas <span>Chegadas</span></h2>
+        <p class="section-sub">As peças mais recentes da nossa coleção</p>
+      </div>
+      <a href="produtos.html?categoria=new">Ver todas →</a>
+    </div>
+    <div class="product-grid" id="grid-new"></div>
+  </div>
+</section>
+
+<!-- PROMO BANNER -->
+<section class="promo-banner">
+  <div class="container" style="position:relative;z-index:1">
+    <h2>Sale até 50% OFF</h2>
+    <p>Promoções imperdíveis em peças selecionadas. Corra, estoque limitado!</p>
+    <a href="produtos.html" class="btn" style="background:white;color:var(--crimson)">Ver Promoções</a>
+  </div>
+</section>
+
+<!-- MAIS VENDIDOS -->
+<section class="products-section" style="background:var(--gray-100)">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Mais <span>Vendidos</span></h2>
+        <p class="section-sub">Os favoritos das nossas clientes</p>
+      </div>
+      <a href="produtos.html">Ver todos →</a>
+    </div>
+    <div class="product-grid" id="grid-top"></div>
+  </div>
+</section>
+
+<!-- PROMOÇÕES -->
+<section class="products-section">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Em <span>Promoção</span></h2>
+        <p class="section-sub">Ofertas especiais por tempo limitado</p>
+      </div>
+      <a href="produtos.html">Ver todas →</a>
+    </div>
+    <div class="product-grid" id="grid-promo"></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section style="background:var(--black);padding:56px 0">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px;text-align:center">
+      <div>
+        <div style="font-size:2rem;margin-bottom:12px">🚚</div>
+        <h4 style="font-family:var(--font-display);color:white;margin-bottom:6px">Frete Grátis</h4>
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem">Acima de R$300</p>
+      </div>
+      <div>
+        <div style="font-size:2rem;margin-bottom:12px">🔄</div>
+        <h4 style="font-family:var(--font-display);color:white;margin-bottom:6px">Troca Fácil</h4>
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem">30 dias para trocar</p>
+      </div>
+      <div>
+        <div style="font-size:2rem;margin-bottom:12px">🔒</div>
+        <h4 style="font-family:var(--font-display);color:white;margin-bottom:6px">Compra Segura</h4>
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem">Dados protegidos</p>
+      </div>
+      <div>
+        <div style="font-size:2rem;margin-bottom:12px">💎</div>
+        <h4 style="font-family:var(--font-display);color:white;margin-bottom:6px">Qualidade</h4>
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem">Garantida em cada peça</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">LK<span style="color:var(--crimson)"> </span><em style="color:var(--gold);font-style:italic">Moda Masculina</em></div>
+        <p>Moda acessível que transforma o seu estilo. Qualidade, elegância e modernidade em cada peça.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Loja</h4>
+        <ul>
+          <li><a href="produtos.html">Todos Produtos</a></li>
+          
+          <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
+          <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Minha Conta</h4>
+        <ul>
+          <li><a href="login.html">Entrar</a></li>
+          <li><a href="cadastro.html">Cadastrar</a></li>
+          <li><a href="carrinho.html">Carrinho</a></li>
+          <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Suporte</h4>
+        <ul>
+          <li><a href="#">Central de Ajuda</a></li>
+          <li><a href="#">Trocas e Devoluções</a></li>
+          <li><a href="https://rastreamento.correios.com.br/app/index.php" target="_blank">Rastreamento</a></li>
+          <li><a href="#">Contato</a></li>
+          <li><a href="#">Tel: (16) 99360-3482</a></li>
+          <li><a href="https://www.instagram.com/masculinalkmodas?igsh=cHduOGY1NXVicnB3" target="_blank">Instagram: @masculinalkmodas</a></li>
+          <li><a href="https://www.facebook.com/leandro.brodowski" target="_blank">Facebook: @Leandro Brodowski</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 LK Moda Masculina. Todos os direitos reservados.</span>
+      <div style="display:flex;gap:16px">
+        <span>Privacidade</span>
+        <span>Termos</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
