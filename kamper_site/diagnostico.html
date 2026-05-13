@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔍 Diagnóstico LK Modas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #c41e3a; margin-bottom: 20px; }
+    .check-item {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 4px solid #ccc;
+      border-radius: 4px;
+    }
+    .check-item.ok { border-left-color: #22c55e; }
+    .check-item.error { border-left-color: #ef4444; }
+    .check-item.warning { border-left-color: #eab308; }
+    .check-title { font-weight: 600; margin-bottom: 5px; }
+    .check-desc { font-size: 0.9em; color: #666; }
+    .check-result { margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 3px; font-family: monospace; font-size: 0.85em; }
+    button { padding: 10px 20px; background: #c41e3a; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+    button:hover { background: #a01830; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🔍 Diagnóstico do Sistema LK Modas</h1>
+  
+  <div id="results"></div>
+  
+  <button onclick="runDiagnostics()">▶ Executar Diagnóstico</button>
+  <button onclick="testFirebase()">🔥 Testar Firebase</button>
+  <button onclick="testLogos()">🖼️ Testar Logos</button>
+  <button onclick="location.reload()">🔄 Recarregar</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-lkmodas.js"></script>
+<script src="script.js"></script>
+
+<script>
+const resultsDiv = document.getElementById('results');
+
+function addResult(title, status, description, details = '') {
+  const statusClass = status === 'ok' ? 'ok' : status === 'error' ? 'error' : 'warning';
+  const statusIcon = status === 'ok' ? '✅' : status === 'error' ? '❌' : '⚠️';
+  
+  resultsDiv.innerHTML += `
+    <div class="check-item ${statusClass}">
+      <div class="check-title">${statusIcon} ${title}</div>
+      <div class="check-desc">${description}</div>
+      ${details ? `<div class="check-result">${details}</div>` : ''}
+    </div>
+  `;
+}
+
+async function runDiagnostics() {
+  resultsDiv.innerHTML = '';
+  
+  // 1. Firebase
+  addResult(
+    'Firebase Carregado',
+    window.FB ? 'ok' : 'error',
+    window.FB ? 'Firebase está inicializado' : 'Firebase não encontrado',
+    window.FB ? `✅ window.FB existe` : `❌ Arquivo firebase-lkmodas.js não foi carregado`
+  );
+  
+  // 2. Cache de Produtos
+  const cache = window.__LK_PRODUCTS_CACHE || [];
+  addResult(
+    'Cache de Produtos',
+    cache.length > 0 ? 'ok' : 'warning',
+    `${cache.length} produtos em cache`,
+    `Cache: ${cache.length} itens`
+  );
+  
+  // 3. Products API
+  const allProducts = Products.getAll ? Products.getAll() : [];
+  addResult(
+    'Products API',
+    allProducts.length > 0 ? 'ok' : 'warning',
+    `${allProducts.length} produtos retornados por Products.getAll()`,
+    `Total: ${allProducts.length} produtos`
+  );
+  
+  // 4. Listener Status
+  const hasListener = Products._unsubscribe ? 'ok' : 'warning';
+  addResult(
+    'Listener de Produtos',
+    hasListener,
+    Products._unsubscribe ? 'Listener ativo' : 'Listener não iniciado',
+    Products._unsubscribe ? '📡 Escutando mudanças em tempo real' : '⚠️ Execute Products.startSync()'
+  );
+  
+  // 5. BroadcastChannel
+  const hasBC = window.BroadcastChannel ? 'ok' : 'error';
+  addResult(
+    'BroadcastChannel',
+    hasBC,
+    window.BroadcastChannel ? 'Suportado' : 'Não suportado',
+    window.BroadcastChannel ? '✅ Notificações inter-abas funcionam' : '❌ Navegador não suporta'
+  );
+  
+  // 6. LocalStorage
+  try {
+    localStorage.setItem('test', 'test');
+    localStorage.removeItem('test');
+    addResult('LocalStorage', 'ok', 'LocalStorage disponível', '✅ Funcionando');
+  } catch (e) {
+    addResult('LocalStorage', 'error', 'LocalStorage não disponível', `❌ ${e.message}`);
+  }
+}
+
+async function testFirebase() {
+  resultsDiv.innerHTML = '';
+  
+  if (!window.FB) {
+    addResult('Firebase', 'error', 'Firebase não foi carregado', '❌ firebase-lkmodas.js não está pronto');
+    return;
+  }
+  
+  addResult('Firebase Config', 'ok', 'Configuração carregada', 'Firebase está inicializado');
+  
+  try {
+    console.log('🔄 Buscando produtos do Firebase...');
+    const products = await window.FB.getProducts();
+    addResult(
+      'Busca de Produtos',
+      products.length > 0 ? 'ok' : 'warning',
+      `${products.length} produtos encontrados`,
+      `Produtos: ${JSON.stringify(products.slice(0, 2), null, 2)}`
+    );
+  } catch (err) {
+    addResult(
+      'Busca de Produtos',
+      'error',
+      'Erro ao buscar',
+      `❌ ${err.message}`
+    );
+  }
+  
+  // Testar listener
+  try {
+    console.log('📡 Iniciando listener...');
+    let listenerData = [];
+    const unsub = window.FB.listenProducts(products => {
+      listenerData = products;
+      console.log(`📢 Listener recebeu ${products.length} produtos`);
+    });
+    
+    setTimeout(() => {
+      if (unsub) unsub();
+      addResult(
+        'Listener em Tempo Real',
+        listenerData.length > 0 ? 'ok' : 'warning',
+        `Listener ativo - ${listenerData.length} produtos`,
+        `✅ Listener funciona corretamente`
+      );
+    }, 2000);
+  } catch (err) {
+    addResult('Listener', 'error', 'Erro ao iniciar', `❌ ${err.message}`);
+  }
+}
+
+async function testLogos() {
+  resultsDiv.innerHTML = '';
+  
+  const logos = [
+    'assets/logo.svg',
+    'assets/hero-modelo.svg',
+    'assets/hero-modelo.png'
+  ];
+  
+  for (const logo of logos) {
+    try {
+      const response = await fetch(logo, { method: 'HEAD' });
+      addResult(
+        `Logo: ${logo}`,
+        response.ok ? 'ok' : 'error',
+        response.ok ? 'Arquivo encontrado' : `Status ${response.status}`,
+        `✅ ${response.status} ${response.statusText}`
+      );
+    } catch (err) {
+      addResult(
+        `Logo: ${logo}`,
+        'error',
+        'Arquivo não encontrado',
+        `❌ ${err.message}`
+      );
+    }
+  }
+}
+</script>
+</body>
+</html>

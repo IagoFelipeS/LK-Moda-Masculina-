@@ -738,6 +738,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const goHome = document.getElementById('go-home');
   if (goHome) goHome.addEventListener('click', () => { window.location.href = 'index.html'; });
 
+  /* 🔄 Botão de debug: forçar sincronização (use #debug na URL) */
+  if (window.location.hash === '#debug') {
+    console.log('🔍 Modo Debug Ativado - Botões disponíveis');
+    const debugBtn = document.createElement('button');
+    debugBtn.textContent = '🔄 Sincronizar';
+    debugBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 15px;background:#c41e3a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600';
+    debugBtn.onclick = () => {
+      console.log('🔄 Forçando sincronização manual...');
+      if (window.FB) {
+        Products.startSync();
+        showToast('🔄 Sincronizando produtos...', 'info');
+      } else {
+        showToast('❌ Firebase não está pronto', 'error');
+      }
+    };
+    document.body.appendChild(debugBtn);
+  }
+
   /* Link ativo no nav */
   const cur = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('nav a, .mobile-nav a').forEach(a => {
