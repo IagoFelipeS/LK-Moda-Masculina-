@@ -1322,7 +1322,6 @@ function addToCartFromDetail() {
     return;
   }
 
-  // Pega qtd atual no carrinho e verifica limite de estoque
   const cartRaw  = JSON.parse(localStorage.getItem('lkmodas_cart') || '[]');
   const cartItem = cartRaw.find(i => String(i.id) === String(currentProduct.id));
   const cartQty  = cartItem ? cartItem.qty : 0;
@@ -1333,9 +1332,20 @@ function addToCartFromDetail() {
     return;
   }
 
-  // Adiciona item a item para usar a lógica do Cart do script.js
-  for (let i = 0; i < toAdd; i++) {
-    Cart.add(currentProduct.id);
+  // Adiciona direto no localStorage sem depender do cache do script.js
+  if (cartItem) {
+    cartItem.qty += toAdd;
+  } else {
+    cartRaw.push({ id: String(currentProduct.id), qty: toAdd });
+  }
+  localStorage.setItem('lkmodas_cart', JSON.stringify(cartRaw));
+
+  // Atualiza contador no header
+  const countEl = document.querySelector('.cart-count');
+  if (countEl) {
+    const total = cartRaw.reduce((s, i) => s + (i.qty || 0), 0);
+    countEl.textContent = total;
+    countEl.style.display = total > 0 ? 'inline-flex' : 'none';
   }
 
   if (toAdd < currentQty) {
