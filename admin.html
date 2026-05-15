@@ -1975,13 +1975,41 @@ function applyImgToZone(dataUrl, hiddenInputName, zoneId, previewId, useId) {
   showToast('Foto carregada! ✅');
 }
 
-/* Lê File object e aplica na zona */
-function fileToZone(file, hiddenInputName, zoneId, previewId, useId) {
+/* Cloudinary — upload sem servidor */
+const CLOUDINARY_CLOUD  = 'ccba56b6-3ba2-47cb-82a6-548e1b1aaa51';
+const CLOUDINARY_PRESET = 'lkmodas_upload';
+
+async function uploadToCloudinary(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+    method: 'POST', body: fd,
+  });
+  if (!res.ok) throw new Error(`Cloudinary ${res.status}`);
+  const data = await res.json();
+  return data.secure_url;
+}
+
+/* Lê File object, faz upload ao Cloudinary e aplica URL na zona */
+async function fileToZone(file, hiddenInputName, zoneId, previewId, useId) {
   if (!file || !file.type.startsWith('image/')) { showToast('Selecione uma imagem.'); return; }
-  if (file.size > 8 * 1024 * 1024) { showToast('Imagem muito grande. Use até 8MB.'); return; }
-  const reader = new FileReader();
-  reader.onload = e => applyImgToZone(e.target.result, hiddenInputName, zoneId, previewId, useId);
-  reader.readAsDataURL(file);
+  if (file.size > 10 * 1024 * 1024) { showToast('Imagem muito grande. Use até 10MB.'); return; }
+
+  const zone = document.getElementById(zoneId);
+  const prev = document.getElementById(previewId);
+  if (zone) { zone.style.borderColor = 'var(--gold,#d4af37)'; zone.style.opacity = '0.6'; }
+  showToast('Enviando imagem…', 'info');
+
+  try {
+    const url = await uploadToCloudinary(file);
+    if (zone) zone.style.opacity = '1';
+    applyImgToZone(url, hiddenInputName, zoneId, previewId, useId);
+  } catch (err) {
+    if (zone) { zone.style.opacity = '1'; zone.style.borderColor = '#e74c3c'; }
+    console.error('Cloudinary upload erro:', err);
+    showToast('Erro ao enviar imagem. Tente novamente.', 'error');
+  }
 }
 
 /* Botão 📁 */
