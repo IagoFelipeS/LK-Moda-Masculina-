@@ -437,6 +437,7 @@ function initCart() {
   function render() {
     const items = Cart.get();
     const prods = Products.getAll();
+    if (!prods.length) return; // aguarda produtos carregarem antes de validar
     let dirty = false;
 
     const valid = items.filter(item => {
