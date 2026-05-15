@@ -1589,10 +1589,19 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') changeGallery(1);
 });
 
-loadProduct().catch(err => {
-  console.error('Erro ao carregar produto:', err);
-  document.getElementById('product-not-found').style.display = 'block';
-});
+function startLoad() {
+  loadProduct().catch(err => {
+    console.error('Erro ao carregar produto:', err);
+    document.getElementById('product-not-found').style.display = 'block';
+  });
+}
+
+if (window.FB) {
+  startLoad();
+} else {
+  window.addEventListener('firebase-ready', startLoad, { once: true });
+  setTimeout(startLoad, 4000); // fallback se firebase demorar
+}
 </script>
 </body>
 </html>
