@@ -762,8 +762,8 @@ footer {
 
   /* Compact 2-column product grid on mobile/tablet */
   .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
   }
   .product-info { padding: 10px; }
   .product-name { font-size: .82rem; }
