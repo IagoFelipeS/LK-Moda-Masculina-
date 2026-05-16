@@ -518,7 +518,9 @@ function initCart() {
       }).catch(() => {});
     }
   }, 3000);
-} ──────────────────────────────────────────────── */
+}
+
+/* ── Login Page ──────────────────────────────────────────────── */
 function initLogin() {
   const form = document.getElementById('login-form');
   if (!form) return;
