@@ -1451,7 +1451,7 @@ window.openOrderDetail = function(id) {
 // ── Products ──────────────────────────────────────
 const PRODUCTS_LOCAL_KEY = 'lkmodas_products';
 var adminProducts = [];
-let stopProductsListener = null;
+var stopProductsListener = null;
 const sameProductId = (a, b) => String(a) === String(b);
 const fallbackProductImg = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=533&fit=crop&q=80';
 const ADMIN_DEFAULT_PRODUCTS = [
