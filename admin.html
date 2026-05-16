@@ -1036,17 +1036,18 @@ const existingSession = gget(ADMIN_SESSION_KEY);
 async function tryAutoInit() {
   if (existingSession) {
     showDashboard();
-    // Re-autentica no Firebase Auth para que listenOrders funcione
+    // Re-autentica no Firebase Auth e só depois inicia listener de pedidos
     if (window.FB?.loginAdmin) {
       try {
         const creds = getCreds();
         await window.FB.loginAdmin(creds.email, creds.password);
+        console.log('✅ Firebase Auth re-login ok — iniciando listener de pedidos');
       } catch (e) {
         console.warn('Firebase re-login falhou:', e);
       }
     }
-  }
-  if (window.FB) {
+    initFirebaseOrders();
+  } else if (window.FB) {
     setTimeout(() => { initFirebaseOrders(); }, 800);
   }
 }
