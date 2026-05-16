@@ -1044,17 +1044,21 @@ function tryAutoInit() {
   }
 
   if (typeof firebase !== 'undefined' && firebase.auth) {
-    const unsub = firebase.auth().onAuthStateChanged(user => {
+    const unsub = firebase.auth().onAuthStateChanged(async user => {
       unsub();
       if (user && user.email === 'lkmodamasculina089@gmail.com') {
-        console.log('✅ Firebase Auth: sessão restaurada automaticamente');
+        try {
+          await user.getIdToken(true); // força renovação do token
+          console.log('✅ Firebase Auth: token renovado');
+        } catch(e) { console.warn('Token refresh falhou:', e.message); }
         proceed();
       } else {
-        // Sessão Firebase expirou — faz login com credenciais salvas
         const creds = getCreds();
-        firebase.auth().signInWithEmailAndPassword(creds.email, creds.password)
-          .then(() => { console.log('✅ Firebase Auth: re-login ok'); proceed(); })
-          .catch(e => { console.warn('Firebase re-login falhou:', e.message); proceed(); });
+        try {
+          await firebase.auth().signInWithEmailAndPassword(creds.email, creds.password);
+          console.log('✅ Firebase Auth: re-login ok');
+        } catch(e) { console.warn('Firebase re-login falhou:', e.message); }
+        proceed();
       }
     });
   } else {
