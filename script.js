@@ -606,6 +606,29 @@ function initCheckout() {
   window.addEventListener('products-updated', initCheckout);
 }
 
+/* ── Botão flutuante de rastreamento ────────────────────────── */
+function initTrackingButton() {
+  const btn = document.createElement('a');
+  btn.href = 'https://rastreamento.correios.com.br/app/index.php';
+  btn.target = '_blank';
+  btn.rel = 'noopener noreferrer';
+  btn.id = 'btn-tracking';
+  btn.innerHTML = `<span class="btn-tracking-icon">📦</span><span class="btn-tracking-label">Rastrear Pedido</span>`;
+  btn.style.cssText = `
+    position:fixed; bottom:24px; right:24px; z-index:9999;
+    display:flex; align-items:center; gap:8px;
+    background:#0a0a0a; color:#fff;
+    padding:12px 18px; border-radius:50px;
+    font-size:.85rem; font-weight:700; letter-spacing:.03em;
+    text-decoration:none; box-shadow:0 4px 20px rgba(0,0,0,.35);
+    transition:transform .2s, box-shadow .2s;
+    border:1.5px solid rgba(255,255,255,.1);
+  `;
+  btn.onmouseenter = () => { btn.style.transform='translateY(-3px)'; btn.style.boxShadow='0 8px 28px rgba(0,0,0,.45)'; };
+  btn.onmouseleave = () => { btn.style.transform=''; btn.style.boxShadow='0 4px 20px rgba(0,0,0,.35)'; };
+  document.body.appendChild(btn);
+}
+
 /* ── Boot ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   /* Inicia páginas imediatamente (carrinho/sessão já no localStorage) */
@@ -615,6 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCart();
   initLogin();
   initCadastro();
+  initTrackingButton();
   initCheckout();
 
   /* Quando Firebase estiver pronto, inicia sync de produtos */
