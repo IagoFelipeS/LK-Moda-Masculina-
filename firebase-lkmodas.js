@@ -183,6 +183,25 @@ const FIREBASE_CONFIG = {
           }
         },
 
+        async decrementStock(cartItems) {
+          if (!Array.isArray(cartItems) || !cartItems.length) return;
+          try {
+            const batch = db.batch();
+            cartItems.forEach(item => {
+              if (!item.id || !item.qty) return;
+              const ref = db.collection('products').doc(String(item.id));
+              batch.update(ref, {
+                stock: firebase.firestore.FieldValue.increment(-Math.abs(item.qty)),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              });
+            });
+            await batch.commit();
+            console.log('✅ Estoque atualizado para', cartItems.length, 'produto(s)');
+          } catch (err) {
+            console.error('decrementStock erro:', err);
+          }
+        },
+
         async deleteProduct(id) {
           try {
             await db.collection('products').doc(String(id)).delete();

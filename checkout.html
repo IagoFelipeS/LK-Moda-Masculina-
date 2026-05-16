@@ -589,6 +589,8 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
         window.FB.saveOrder(orderData),
         new Promise(resolve => setTimeout(resolve, 5000))
       ]);
+      // Decrementa estoque dos produtos comprados
+      await window.FB.decrementStock(cartItems);
     } catch (err) {
       console.error('Firebase order save:', err);
     }
