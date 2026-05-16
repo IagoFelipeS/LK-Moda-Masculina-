@@ -601,7 +601,7 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
     try {
       await Promise.race([
         notificarNovoPedido(orderData),
-        new Promise(resolve => setTimeout(resolve, 2500))
+        new Promise(resolve => setTimeout(resolve, 6000))
       ]);
     } catch (err) {
       console.error('EmailJS novo pedido:', err);

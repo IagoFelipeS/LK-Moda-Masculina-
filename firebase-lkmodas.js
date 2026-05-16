@@ -192,11 +192,10 @@ const FIREBASE_CONFIG = {
               const ref = db.collection('products').doc(String(item.id));
               batch.update(ref, {
                 stock: firebase.firestore.FieldValue.increment(-Math.abs(item.qty)),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
               });
             });
             await batch.commit();
-            console.log('✅ Estoque atualizado para', cartItems.length, 'produto(s)');
+            console.log('✅ Estoque decrementado para', cartItems.length, 'produto(s)');
           } catch (err) {
             console.error('decrementStock erro:', err);
           }
