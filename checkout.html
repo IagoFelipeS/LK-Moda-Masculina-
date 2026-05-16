@@ -583,6 +583,7 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
   localStorage.removeItem('lkmodas_cart');
 
   // Salvar no Firebase (aguarda antes de redirecionar)
+  console.log('📦 cartItems para decrementar:', JSON.stringify(cartItems));
   if (window.FB) {
     try {
       await Promise.race([
@@ -590,10 +591,16 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
         new Promise(resolve => setTimeout(resolve, 5000))
       ]);
       // Decrementa estoque dos produtos comprados
-      await window.FB.decrementStock(cartItems);
+      if (cartItems.length > 0) {
+        await window.FB.decrementStock(cartItems);
+      } else {
+        console.warn('⚠️ cartItems vazio — estoque não decrementado');
+      }
     } catch (err) {
       console.error('Firebase order save:', err);
     }
+  } else {
+    console.warn('⚠️ window.FB não disponível');
   }
 
   // Envia e-mail em background (não bloqueia o redirect)
