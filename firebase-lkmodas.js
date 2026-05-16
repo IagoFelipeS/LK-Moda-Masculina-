@@ -184,20 +184,25 @@ const FIREBASE_CONFIG = {
         },
 
         async decrementStock(cartItems) {
-          if (!Array.isArray(cartItems) || !cartItems.length) return;
+          if (!Array.isArray(cartItems) || !cartItems.length) {
+            console.warn('decrementStock: cartItems vazio', cartItems);
+            return;
+          }
+          console.log('🔄 decrementStock chamado com', cartItems);
           try {
             const batch = db.batch();
             cartItems.forEach(item => {
               if (!item.id || !item.qty) return;
+              console.log(`  → produto ${item.id} qty -${item.qty}`);
               const ref = db.collection('products').doc(String(item.id));
               batch.update(ref, {
                 stock: firebase.firestore.FieldValue.increment(-Math.abs(item.qty)),
               });
             });
             await batch.commit();
-            console.log('✅ Estoque decrementado para', cartItems.length, 'produto(s)');
+            console.log('✅ Estoque decrementado com sucesso');
           } catch (err) {
-            console.error('decrementStock erro:', err);
+            console.error('❌ decrementStock erro:', err.code, err.message);
           }
         },
 
