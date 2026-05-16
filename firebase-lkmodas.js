@@ -184,23 +184,18 @@ const FIREBASE_CONFIG = {
         },
 
         async decrementStock(cartItems) {
-          if (!Array.isArray(cartItems) || !cartItems.length) {
-            console.warn('decrementStock: cartItems vazio', cartItems);
-            return;
-          }
-          console.log('🔄 decrementStock chamado com', cartItems);
+          if (!Array.isArray(cartItems) || !cartItems.length) return;
           try {
-            const batch = db.batch();
-            cartItems.forEach(item => {
-              if (!item.id || !item.qty) return;
-              console.log(`  → produto ${item.id} qty -${item.qty}`);
-              const ref = db.collection('products').doc(String(item.id));
-              batch.update(ref, {
-                stock: firebase.firestore.FieldValue.increment(-Math.abs(item.qty)),
-              });
-            });
-            await batch.commit();
-            console.log('✅ Estoque decrementado com sucesso');
+            for (const item of cartItems) {
+              if (!item.id || !item.qty) continue;
+              const ref  = db.collection('products').doc(String(item.id));
+              const snap = await ref.get();
+              if (!snap.exists) continue;
+              const currentStock = Number(snap.data().stock ?? 0);
+              const newStock     = Math.max(0, currentStock - Math.abs(item.qty));
+              await ref.update({ stock: newStock });
+              console.log(`✅ Estoque ${item.id}: ${currentStock} → ${newStock}`);
+            }
           } catch (err) {
             console.error('❌ decrementStock erro:', err.code, err.message);
           }
