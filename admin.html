@@ -1047,10 +1047,7 @@ function tryAutoInit() {
     const unsub = firebase.auth().onAuthStateChanged(async user => {
       unsub();
       if (user && user.email === 'lkmodamasculina089@gmail.com') {
-        try {
-          await user.getIdToken(true); // força renovação do token
-          console.log('✅ Firebase Auth: token renovado');
-        } catch(e) { console.warn('Token refresh falhou:', e.message); }
+        console.log('✅ Firebase Auth: sessão ativa');
         proceed();
       } else {
         const creds = getCreds();
