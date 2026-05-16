@@ -1036,30 +1036,24 @@ const existingSession = gget(ADMIN_SESSION_KEY);
 function tryAutoInit() {
   if (!existingSession) return;
 
-  // Usa onAuthStateChanged para detectar sessão Firebase existente
-  // (Firebase persiste auth automaticamente — não precisa logar de novo)
-  function proceed() {
+  async function proceed() {
+    // Sempre faz login com credenciais para garantir token fresco (evita token expirado)
+    const creds = getCreds();
+    try {
+      await firebase.auth().signInWithEmailAndPassword(creds.email, creds.password);
+      console.log('✅ Firebase Auth: token renovado');
+    } catch(e) {
+      console.warn('Firebase re-login falhou:', e.message);
+    }
     showDashboard();
     initFirebaseOrders();
   }
 
   if (typeof firebase !== 'undefined' && firebase.auth) {
-    const unsub = firebase.auth().onAuthStateChanged(async user => {
-      unsub();
-      if (user && user.email === 'lkmodamasculina089@gmail.com') {
-        console.log('✅ Firebase Auth: sessão ativa');
-        proceed();
-      } else {
-        const creds = getCreds();
-        try {
-          await firebase.auth().signInWithEmailAndPassword(creds.email, creds.password);
-          console.log('✅ Firebase Auth: re-login ok');
-        } catch(e) { console.warn('Firebase re-login falhou:', e.message); }
-        proceed();
-      }
-    });
-  } else {
     proceed();
+  } else {
+    showDashboard();
+    initFirebaseOrders();
   }
 }
 
@@ -1568,21 +1562,16 @@ async function refreshAdminProducts(forceRemote = false) {
     remoteProducts = await seedDefaultProductsIfNeeded();
   }
 
-  // 🔄 Merge: combina Firebase com produtos salvos localmente
+  // Firebase tem prioridade absoluta — local só entra se não existe no Firebase
   const localProducts = gget(PRODUCTS_LOCAL_KEY, []);
   if (Array.isArray(localProducts) && localProducts.length > 0) {
     const mergedMap = new Map();
-    
-    // Adiciona do Firebase (remoto tem prioridade)
+    // Local entra primeiro (menor prioridade)
+    localProducts.forEach(p => { mergedMap.set(String(p.id), p); });
+    // Firebase sobrescreve local (maior prioridade)
     (Array.isArray(remoteProducts) ? remoteProducts : []).forEach(p => {
       mergedMap.set(String(p.id), p);
     });
-    
-    // Adiciona/atualiza com locais
-    localProducts.forEach(p => {
-      mergedMap.set(String(p.id), p);
-    });
-    
     remoteProducts = Array.from(mergedMap.values());
   }
 
@@ -1666,6 +1655,12 @@ window.deleteProduct = async function(id) {
     showToast('Falha ao remover produto no Firebase.');
     return;
   }
+  // Remove do localStorage para não reaparecer ao recarregar
+  try {
+    const localProducts = gget(PRODUCTS_LOCAL_KEY, []);
+    const filtered = localProducts.filter(p => !sameProductId(p.id, id));
+    gset(PRODUCTS_LOCAL_KEY, filtered);
+  } catch {}
   adminProducts = getAdminProducts().filter(product => !sameProductId(product.id, id));
   renderProductsTable();
   renderDashboard();
