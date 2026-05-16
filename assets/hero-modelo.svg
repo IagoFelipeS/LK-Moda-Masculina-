@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#2d2d2d"/>
+    </linearGradient>
+    <linearGradient id="suit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c2c2c"/>
+      <stop offset="100%" style="stop-color:#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c8956c"/>
+      <stop offset="100%" style="stop-color:#b07d55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="560" fill="url(#bg)"/>
+
+  <!-- Decorative lines -->
+  <line x1="30" y1="30" x2="370" y2="30" stroke="#c9a84c" stroke-width="1" opacity="0.3"/>
+  <line x1="30" y1="530" x2="370" y2="530" stroke="#c9a84c" stroke-width="1" opacity="0.3"/>
+
+  <!-- Legs / Calças -->
+  <rect x="158" y="370" width="36" height="150" rx="4" fill="#1e1e1e"/>
+  <rect x="206" y="370" width="36" height="150" rx="4" fill="#1e1e1e"/>
+
+  <!-- Shoes -->
+  <ellipse cx="176" cy="520" rx="22" ry="8" fill="#111"/>
+  <ellipse cx="224" cy="520" rx="22" ry="8" fill="#111"/>
+
+  <!-- Shirt / Camisa -->
+  <rect x="148" y="230" width="104" height="148" rx="6" fill="#f0f0f0"/>
+
+  <!-- Suit jacket -->
+  <path d="M148 230 L130 240 L118 280 L118 380 L158 380 L158 270 L200 290 L242 270 L242 380 L282 380 L282 280 L270 240 L252 230 Z" fill="url(#suit)"/>
+
+  <!-- Lapels -->
+  <path d="M200 290 L168 240 L148 230 L158 270 Z" fill="#3a3a3a"/>
+  <path d="M200 290 L232 240 L252 230 L242 270 Z" fill="#3a3a3a"/>
+
+  <!-- Tie -->
+  <path d="M196 240 L204 240 L208 310 L200 320 L192 310 Z" fill="#c9a84c"/>
+
+  <!-- Shirt collar -->
+  <path d="M188 230 L200 255 L212 230" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+
+  <!-- Left arm -->
+  <path d="M118 260 L90 340 L110 348 L132 275" fill="url(#suit)"/>
+  <!-- Left hand -->
+  <ellipse cx="100" cy="344" rx="12" ry="10" fill="url(#skin)"/>
+
+  <!-- Right arm -->
+  <path d="M282 260 L310 340 L290 348 L268 275" fill="url(#suit)"/>
+  <!-- Right hand -->
+  <ellipse cx="300" cy="344" rx="12" ry="10" fill="url(#skin)"/>
+
+  <!-- Neck -->
+  <rect x="186" y="190" width="28" height="46" rx="8" fill="url(#skin)"/>
+
+  <!-- Head -->
+  <ellipse cx="200" cy="170" rx="46" ry="54" fill="url(#skin)"/>
+
+  <!-- Hair -->
+  <path d="M154 155 Q158 110 200 108 Q242 110 246 155 Q240 130 200 128 Q160 130 154 155 Z" fill="#1a1a1a"/>
+
+  <!-- Eyes -->
+  <ellipse cx="184" cy="168" rx="6" ry="5" fill="white"/>
+  <ellipse cx="216" cy="168" rx="6" ry="5" fill="white"/>
+  <ellipse cx="185" cy="169" rx="3.5" ry="3.5" fill="#2c1810"/>
+  <ellipse cx="217" cy="169" rx="3.5" ry="3.5" fill="#2c1810"/>
+
+  <!-- Eyebrows -->
+  <path d="M177 160 Q185 156 192 159" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M208 159 Q215 156 223 160" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Nose -->
+  <path d="M198 175 Q196 184 199 187 Q201 188 203 187 Q206 184 202 175" fill="none" stroke="#a07050" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Mouth -->
+  <path d="M189 197 Q200 204 211 197" fill="none" stroke="#8b5e52" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Belt -->
+  <rect x="148" y="368" width="104" height="12" rx="3" fill="#111"/>
+  <rect x="194" y="369" width="12" height="10" rx="2" fill="#c9a84c"/>
+
+  <!-- Pocket square -->
+  <path d="M126 255 L138 255 L136 245 L128 245 Z" fill="#c9a84c" opacity="0.8"/>
+
+  <!-- Brand tag -->
+  <text x="200" y="548" font-family="Georgia, serif" font-size="11" fill="#c9a84c" text-anchor="middle" letter-spacing="3" opacity="0.7">LK MODAS</text>
+</svg>
