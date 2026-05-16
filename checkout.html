@@ -79,7 +79,7 @@
   </div>
 
   <!-- HIDDEN payment method input -->
-  <input type="hidden" id="payment-method" value="">
+  <input type="hidden" id="payment-method" value="pix">
   <input type="hidden" id="frete-valor" value="0">
   <input type="hidden" id="frete-tipo" value="">
 
@@ -180,53 +180,14 @@
           <span class="step-num">2</span>
           Forma de Pagamento
         </h3>
-        <div class="payment-options">
-          <div class="payment-opt" data-method="cartao">
-            <div class="icon">💳</div>
-            <span>Cartão</span>
+        <!-- Apenas PIX disponível -->
+        <input type="hidden" id="payment-method-fixed" value="pix">
+        <div style="background:#e8f4fd;border:2px solid #009ee3;border-radius:8px;padding:18px;display:flex;align-items:center;gap:14px;margin-top:8px">
+          <span style="font-size:2rem">⚡</span>
+          <div>
+            <p style="font-weight:700;margin-bottom:2px;color:#007ab8">Pix — Pagamento Instantâneo</p>
+            <p style="font-size:.82rem;color:#555">O QR Code e o código Pix serão exibidos na próxima tela após confirmar o pedido.</p>
           </div>
-          <div class="payment-opt" data-method="pix">
-            <div class="icon">⚡</div>
-            <span>Pix</span>
-          </div>
-        </div>
-
-        <!-- Card fields -->
-        <div id="card-fields" style="margin-top:20px;display:none">
-          <div class="form-group">
-            <label class="form-label">Número do Cartão</label>
-            <input class="form-input" type="text" placeholder="0000 0000 0000 0000" maxlength="19" id="card-number">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Validade</label>
-              <input class="form-input" type="text" placeholder="MM/AA" maxlength="5" id="card-expiry">
-            </div>
-            <div class="form-group">
-              <label class="form-label">CVV</label>
-              <input class="form-input" type="text" placeholder="000" maxlength="4" id="card-cvv">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Nome no Cartão</label>
-            <input class="form-input" type="text" placeholder="Como aparece no cartão" id="card-name">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Parcelamento</label>
-            <select class="form-input" id="installments">
-              <option value="1x sem juros">1x sem juros</option>
-              <option value="2x sem juros">2x sem juros</option>
-              <option value="3x sem juros">3x sem juros</option>
-              <option value="4x sem juros">4x sem juros</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Pix info -->
-        <div id="pix-info" style="margin-top:20px;display:none;background:var(--gray-100);padding:20px;border-radius:4px;text-align:center">
-          <div style="font-size:2rem;margin-bottom:8px">⚡</div>
-          <p style="font-weight:600;margin-bottom:4px">Pagamento via Pix</p>
-          <p style="font-size:.85rem;color:var(--gray-600)">O QR Code será gerado após confirmar o pedido. Aprovação em segundos!</p>
         </div>
 
       </div>
@@ -290,35 +251,7 @@
 <script src="emailjs-lkmodas.js"></script>
 <script src="script.js?v=5"></script>
 <script>
-// Payment option toggle
-document.querySelectorAll('.payment-opt').forEach(opt => {
-  opt.addEventListener('click', () => {
-    document.querySelectorAll('.payment-opt').forEach(o => o.classList.remove('selected'));
-    opt.classList.add('selected');
-    const method = opt.dataset.method;
-    document.getElementById('payment-method').value = method; // Atualiza o hidden input
-    document.getElementById('card-fields').style.display = method === 'cartao' ? 'block' : 'none';
-    document.getElementById('pix-info').style.display = method === 'pix' ? 'block' : 'none';
-  });
-});
-// Card number format
-const cardNum = document.getElementById('card-number');
-if (cardNum) {
-  cardNum.addEventListener('input', () => {
-    let v = cardNum.value.replace(/\D/g,'');
-    v = v.match(/.{1,4}/g)?.join(' ') || v;
-    cardNum.value = v.slice(0, 19);
-  });
-}
-// Card expiry format
-const cardExp = document.getElementById('card-expiry');
-if (cardExp) {
-  cardExp.addEventListener('input', () => {
-    let v = cardExp.value.replace(/\D/g,'');
-    if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2,4);
-    cardExp.value = v;
-  });
-}
+// PIX é o único método — já está fixo no hidden input
 
 // ── Frete por CEP ─────────────────────────────────────────────
 const FRETE_TABLE = {
@@ -391,8 +324,7 @@ function generatePixIdentifier(orderId, total) {
 }
 
 function generatePixCopyPasteKey(orderId, total) {
-  // Retorna a chave Pix real para copiar e colar
-  return PAYMENT_DATA.pix.key;
+  return '+5516993603482';
 }
 
 function atualizarResumoFrete() {
@@ -595,31 +527,6 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
     document.getElementById('cep-error').textContent = 'CEP inválido';
     isValid = false;
   }
-  if (!paymentMethod) {
-    alert('Selecione uma forma de pagamento');
-    isValid = false;
-  }
-
-  // Validação de cartão se selecionado
-  if (paymentMethod === 'cartao') {
-    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-    const cardExpiry = document.getElementById('card-expiry').value;
-    const cardCvv = document.getElementById('card-cvv').value;
-    
-    if (!cardNumber || cardNumber.length < 13) {
-      alert('Número do cartão inválido');
-      isValid = false;
-    }
-    if (!cardExpiry || cardExpiry.length < 5) {
-      alert('Validade do cartão inválida');
-      isValid = false;
-    }
-    if (!cardCvv || cardCvv.length < 3) {
-      alert('CVV inválido');
-      isValid = false;
-    }
-  }
-
   if (!isValid) return;
 
   // Criar objeto do pedido
