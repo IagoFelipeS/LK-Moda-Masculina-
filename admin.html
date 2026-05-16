@@ -1032,30 +1032,41 @@ document.getElementById('btn-resend-code').addEventListener('click', e => {
 
 // Auto-login if session exists
 const existingSession = gget(ADMIN_SESSION_KEY);
-// Auto-login + Firebase init - wait for firebase-ready event or timeout
-async function tryAutoInit() {
-  if (existingSession) {
-    // Autentica no Firebase ANTES de mostrar o dashboard
-    if (window.FB?.loginAdmin) {
-      try {
-        const creds = getCreds();
-        await window.FB.loginAdmin(creds.email, creds.password);
-        console.log('✅ Firebase Auth re-login ok');
-      } catch (e) {
-        console.warn('Firebase re-login falhou:', e);
-      }
-    }
+
+function tryAutoInit() {
+  if (!existingSession) return;
+
+  // Usa onAuthStateChanged para detectar sessão Firebase existente
+  // (Firebase persiste auth automaticamente — não precisa logar de novo)
+  function proceed() {
     showDashboard();
     initFirebaseOrders();
-  } else if (window.FB) {
-    setTimeout(() => { initFirebaseOrders(); }, 800);
+  }
+
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    const unsub = firebase.auth().onAuthStateChanged(user => {
+      unsub();
+      if (user && user.email === 'lkmodamasculina089@gmail.com') {
+        console.log('✅ Firebase Auth: sessão restaurada automaticamente');
+        proceed();
+      } else {
+        // Sessão Firebase expirou — faz login com credenciais salvas
+        const creds = getCreds();
+        firebase.auth().signInWithEmailAndPassword(creds.email, creds.password)
+          .then(() => { console.log('✅ Firebase Auth: re-login ok'); proceed(); })
+          .catch(e => { console.warn('Firebase re-login falhou:', e.message); proceed(); });
+      }
+    });
+  } else {
+    proceed();
   }
 }
+
 if (window.FB) {
   tryAutoInit();
 } else {
   window.addEventListener('firebase-ready', tryAutoInit, { once: true });
-  setTimeout(tryAutoInit, 2000); // fallback
+  setTimeout(tryAutoInit, 2000);
 }
 
 function showDashboard() {
