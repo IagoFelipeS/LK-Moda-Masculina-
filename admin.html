@@ -1033,10 +1033,21 @@ document.getElementById('btn-resend-code').addEventListener('click', e => {
 // Auto-login if session exists
 const existingSession = gget(ADMIN_SESSION_KEY);
 // Auto-login + Firebase init - wait for firebase-ready event or timeout
-function tryAutoInit() {
-  if (existingSession) showDashboard();
+async function tryAutoInit() {
+  if (existingSession) {
+    showDashboard();
+    // Re-autentica no Firebase Auth para que listenOrders funcione
+    if (window.FB?.loginAdmin) {
+      try {
+        const creds = getCreds();
+        await window.FB.loginAdmin(creds.email, creds.password);
+      } catch (e) {
+        console.warn('Firebase re-login falhou:', e);
+      }
+    }
+  }
   if (window.FB) {
-    setTimeout(() => { initFirebaseOrders(); }, 500);
+    setTimeout(() => { initFirebaseOrders(); }, 800);
   }
 }
 if (window.FB) {

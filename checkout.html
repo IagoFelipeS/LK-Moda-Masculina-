@@ -582,13 +582,19 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
   sessionStorage.setItem('currentOrder', JSON.stringify(orderData));
   localStorage.removeItem('lkmodas_cart');
 
-  // Salvar no Firebase (nuvem)
+  // Salvar no Firebase (aguarda antes de redirecionar)
   if (window.FB) {
-    window.FB.saveOrder(orderData).catch(err => console.error('Firebase order save:', err));
+    try {
+      await Promise.race([
+        window.FB.saveOrder(orderData),
+        new Promise(resolve => setTimeout(resolve, 5000))
+      ]);
+    } catch (err) {
+      console.error('Firebase order save:', err);
+    }
   }
 
-  // Redirecionar para página de confirmação de pagamento
-  // Envia e-mails em background (não bloqueia o redirect)
+  // Envia e-mail em background (não bloqueia o redirect)
   if (typeof notificarNovoPedido === 'function') {
     try {
       await Promise.race([
