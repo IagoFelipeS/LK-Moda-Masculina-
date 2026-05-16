@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Produtos — LK Moda Masculina</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -132,5 +132,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="firebase-lkmodas.js"></script>
 <script src="script.js?v=4"></script>
+<script>
+(function() {
+  var filtersBar = document.querySelector('.filters-bar');
+  if (!filtersBar) return;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY <= 80) {
+      filtersBar.classList.remove('filters-hidden');
+    } else {
+      filtersBar.classList.add('filters-hidden');
+    }
+  }, { passive: true });
+})();
+</script>
 </body>
 </html>
