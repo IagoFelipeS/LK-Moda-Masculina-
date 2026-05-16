@@ -752,6 +752,13 @@ footer {
   .mobile-nav { display: flex; }
   .hero-img-col { width: 100%; opacity: .3; }
   .hero { height: auto; min-height: 80vh; }
+
+  /* Header compacto no mobile */
+  .header-inner { height: 60px; gap: 10px; }
+  .logo-icon { height: 40px; width: 40px; }
+  .logo { font-size: 1.1rem; gap: 8px; }
+  .logo em { display: none; }
+  .cart-btn { padding: 7px 12px; font-size: .78rem; gap: 4px; }
   .cart-layout, .checkout-layout { grid-template-columns: 1fr; }
   .cart-summary { position: static; }
   .order-summary { position: static; }
