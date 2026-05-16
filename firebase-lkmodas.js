@@ -184,20 +184,23 @@ const FIREBASE_CONFIG = {
         },
 
         async decrementStock(cartItems) {
-          if (!Array.isArray(cartItems) || !cartItems.length) return;
-          try {
-            for (const item of cartItems) {
-              if (!item.id || !item.qty) continue;
+          if (!Array.isArray(cartItems) || !cartItems.length) {
+            console.warn('decrementStock: lista vazia');
+            return;
+          }
+          for (const item of cartItems) {
+            if (!item.id || !item.qty) continue;
+            try {
               const ref  = db.collection('products').doc(String(item.id));
               const snap = await ref.get();
-              if (!snap.exists) continue;
+              if (!snap.exists) { console.warn('Produto não encontrado:', item.id); continue; }
               const currentStock = Number(snap.data().stock ?? 0);
               const newStock     = Math.max(0, currentStock - Math.abs(item.qty));
               await ref.update({ stock: newStock });
-              console.log(`✅ Estoque ${item.id}: ${currentStock} → ${newStock}`);
+              console.log(`✅ Estoque atualizado: ${item.id} ${currentStock}→${newStock}`);
+            } catch (err) {
+              console.error(`❌ Erro ao atualizar estoque ${item.id}:`, err.code, err.message);
             }
-          } catch (err) {
-            console.error('❌ decrementStock erro:', err.code, err.message);
           }
         },
 
