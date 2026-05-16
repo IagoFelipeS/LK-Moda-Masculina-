@@ -759,6 +759,20 @@ footer {
   .auth-visual { display: none; }
   .admin-layout { grid-template-columns: 1fr; }
   .admin-sidebar { display: none; }
+
+  /* Compact 2-column product grid on mobile/tablet */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .product-info { padding: 10px; }
+  .product-name { font-size: .82rem; }
+  .product-category { font-size: .67rem; }
+  .price-current { font-size: .92rem; }
+  .price-old, .price-discount { font-size: .72rem; }
+  .product-stock { font-size: .7rem; }
+  .product-quick-add { font-size: .72rem; padding: 10px; }
+  .products-section { padding: 40px 0; }
 }
 @media (max-width: 600px) {
   .container { padding: 0 16px; }
@@ -773,18 +787,4 @@ footer {
   .hero-cta .btn { width: 100%; justify-content: center; }
   .admin-login-card { padding: 32px 24px; }
   .checkout-layout .order-summary { display: none; }
-
-  /* Compact 2-column product grid on mobile */
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .product-info { padding: 10px; }
-  .product-name { font-size: .8rem; }
-  .product-category { font-size: .65rem; }
-  .price-current { font-size: .9rem; }
-  .price-old, .price-discount { font-size: .72rem; }
-  .product-stock { font-size: .68rem; }
-  .product-quick-add { font-size: .72rem; padding: 10px; }
-  .products-section { padding: 40px 0; }
 }
