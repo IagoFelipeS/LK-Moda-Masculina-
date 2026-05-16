@@ -509,9 +509,16 @@ function initCart() {
 
   render();
   window.addEventListener('products-updated', render);
-}
 
-/* ── Login Page ──────────────────────────────────────────────── */
+  // Se produtos ainda não carregaram após 3s, força busca no Firebase
+  setTimeout(() => {
+    if (!Products.getAll().length && window.FB) {
+      window.FB.getProducts().then(list => {
+        if (list && list.length) Products.setCache(list);
+      }).catch(() => {});
+    }
+  }, 3000);
+} ──────────────────────────────────────────────── */
 function initLogin() {
   const form = document.getElementById('login-form');
   if (!form) return;
