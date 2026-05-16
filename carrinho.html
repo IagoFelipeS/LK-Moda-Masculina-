@@ -87,7 +87,22 @@
         <span>Subtotal</span>
         <span id="summary-subtotal">R$ 0,00</span>
       </div>
-      <div class="summary-line">
+
+      <!-- CEP -->
+      <div style="margin:16px 0">
+        <label style="font-size:.72rem;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:6px">Calcular Frete</label>
+        <div style="display:flex;gap:8px">
+          <input id="cep-input" type="text" inputmode="numeric" maxlength="9" placeholder="00000-000"
+            style="flex:1;padding:9px 12px;border-radius:4px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#fff;font-size:.88rem;outline:none">
+          <button id="cep-btn" onclick="calcularFrete()"
+            style="padding:9px 14px;border-radius:4px;background:var(--gold);color:#000;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:none;white-space:nowrap">
+            Calcular
+          </button>
+        </div>
+        <span id="cep-msg" style="font-size:.72rem;color:rgba(255,255,255,.4);display:block;margin-top:4px"></span>
+      </div>
+
+      <div class="summary-line" id="shipping-line" style="display:none">
         <span>Frete</span>
         <span id="summary-shipping">—</span>
       </div>
@@ -123,5 +138,60 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="firebase-lkmodas.js"></script>
 <script src="script.js?v=4"></script>
+<script>
+// Máscara CEP
+document.getElementById('cep-input').addEventListener('input', function() {
+  var v = this.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
+  this.value = v;
+});
+
+function calcularFrete() {
+  var cep = document.getElementById('cep-input').value.replace(/\D/g, '');
+  var msg = document.getElementById('cep-msg');
+  var shippingLine = document.getElementById('shipping-line');
+  var shippingEl = document.getElementById('summary-shipping');
+  var totalEl = document.getElementById('summary-total');
+  var subtotalEl = document.getElementById('summary-subtotal');
+
+  if (cep.length !== 8) {
+    msg.textContent = 'Digite um CEP válido (8 dígitos).';
+    msg.style.color = 'rgba(255,100,100,.8)';
+    return;
+  }
+
+  msg.textContent = 'Calculando...';
+  msg.style.color = 'rgba(255,255,255,.4)';
+
+  fetch('https://viacep.com.br/ws/' + cep + '/json/')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.erro) {
+        msg.textContent = 'CEP não encontrado.';
+        msg.style.color = 'rgba(255,100,100,.8)';
+        return;
+      }
+      msg.textContent = data.localidade + ' — ' + data.uf;
+      msg.style.color = 'rgba(255,255,255,.5)';
+
+      // Calcula subtotal atual
+      var subtotalText = subtotalEl ? subtotalEl.textContent : 'R$ 0,00';
+      var subtotal = parseFloat(subtotalText.replace('R$','').replace('.','').replace(',','.').trim()) || 0;
+
+      var frete = subtotal >= 300 ? 0 : 19.90;
+      shippingEl.textContent = frete === 0 ? 'GRÁTIS' : 'R$ ' + frete.toFixed(2).replace('.',',');
+      shippingLine.style.display = 'flex';
+
+      if (totalEl) {
+        var total = subtotal + frete;
+        totalEl.textContent = 'R$ ' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace(/\.(\d{2})$/, ',$1');
+      }
+    })
+    .catch(function() {
+      msg.textContent = 'Erro ao buscar CEP. Tente novamente.';
+      msg.style.color = 'rgba(255,100,100,.8)';
+    });
+}
+</script>
 </body>
 </html>

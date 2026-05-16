@@ -498,13 +498,20 @@ function initCart() {
   }
 
   function updateSummary(total) {
-    const ship = total > 0 ? (total >= 300 ? 0 : 19.90) : 0;
     const s = document.getElementById('summary-subtotal');
-    const h = document.getElementById('summary-shipping');
     const t = document.getElementById('summary-total');
+    const shippingLine = document.getElementById('shipping-line');
     if (s) s.textContent = formatPrice(total);
-    if (h) h.textContent = (ship === 0 && total > 0) ? 'GRÁTIS' : formatPrice(ship);
-    if (t) t.textContent = formatPrice(total + ship);
+    // Frete só aparece após o cliente informar o CEP — não calculamos aqui
+    if (shippingLine && shippingLine.style.display === 'flex') {
+      // Mantém o frete já calculado e recalcula o total
+      const h = document.getElementById('summary-shipping');
+      const isGratis = h && h.textContent === 'GRÁTIS';
+      const ship = isGratis ? 0 : 19.90;
+      if (t) t.textContent = formatPrice(total + ship);
+    } else {
+      if (t) t.textContent = formatPrice(total);
+    }
   }
 
   render();
