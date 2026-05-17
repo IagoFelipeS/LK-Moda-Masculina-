@@ -806,6 +806,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="firebase-lkmodas.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="emailjs-lkmodas.js"></script>
 <script>
 'use strict';
 /* ════════════════════════════════════════════════
@@ -1329,6 +1331,12 @@ updateOrderStatus = async function(id, status) {
   saveOrders(orders);
   if (window.FB) await window.FB.updateOrderStatus(id, status);
   addLog('action', `Pedido #${id} → "${STATUS_CFG[status]?.label}".`);
+
+  // Envia e-mail de atualização para o cliente
+  if (order.email && typeof notificarMudancaStatus === 'function') {
+    notificarMudancaStatus(order, status).catch(e => console.warn('E-mail status:', e));
+  }
+
   renderOrdersTable(filterState);
   renderDashboard();
 };
