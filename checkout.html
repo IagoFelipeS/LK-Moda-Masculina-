@@ -251,6 +251,20 @@
 <script src="emailjs-lkmodas.js"></script>
 <script src="script.js?v=5"></script>
 <script>
+// Verifica se o cliente está logado — redireciona para login se não estiver
+(function checkAuth() {
+  function verify() {
+    if (!window.FB) { setTimeout(verify, 200); return; }
+    window.FB.onAuthChange(function(user) {
+      if (!user) {
+        sessionStorage.setItem('redirect_after_login', 'checkout.html');
+        window.location.href = 'login.html?next=checkout';
+      }
+    });
+  }
+  verify();
+})();
+
 // PIX é o único método — já está fixo no hidden input
 
 // ── Frete por CEP ─────────────────────────────────────────────
@@ -589,10 +603,6 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
         window.FB.saveOrder(orderData),
         new Promise(resolve => setTimeout(resolve, 5000))
       ]);
-      // Garante autenticação antes de decrementar estoque
-      if (!window.FB.getCurrentUser()) {
-        try { await firebase.auth().signInAnonymously(); } catch(e) {}
-      }
       await window.FB.decrementStock(cartItems);
     } catch (err) {
       console.error('Firebase save/decrement:', err);

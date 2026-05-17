@@ -548,7 +548,9 @@ function initLogin() {
     const r = await Auth.login(email, pass);
     if (r.ok) {
       showToast('Bem-vindo(a)! 👋');
-      setTimeout(() => { window.location.href = 'index.html'; }, 900);
+      const next = sessionStorage.getItem('redirect_after_login') || new URLSearchParams(window.location.search).get('next');
+      sessionStorage.removeItem('redirect_after_login');
+      setTimeout(() => { window.location.href = next ? next + '.html' : 'index.html'; }, 900);
     } else {
       pErr.textContent = r.msg || 'E-mail ou senha incorretos.'; pErr.classList.add('show');
     }
