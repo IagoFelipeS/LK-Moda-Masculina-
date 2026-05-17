@@ -654,6 +654,24 @@
   </div>
 </div>
 
+<!-- TRACKING CODE MODAL -->
+<div class="modal-overlay" id="tracking-modal">
+  <div class="modal" style="max-width:440px;text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-family:var(--font-display);font-size:1.1rem">🚚 Despachar Pedido</h2>
+      <button class="modal-close" style="font-size:1.4rem;color:var(--gray-400);background:none;border:none;cursor:pointer">&times;</button>
+    </div>
+    <p style="color:var(--gray-600);font-size:.9rem;margin-bottom:16px">Cole o código de rastreio gerado pelos Correios. Ele será enviado por e-mail ao cliente.</p>
+    <label class="form-label">Código de Rastreio</label>
+    <input id="tracking-code-input" class="form-input" type="text" placeholder="Ex: AA123456789BR" style="text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">
+    <p style="font-size:.75rem;color:var(--gray-400);margin-bottom:20px">Você encontra o código no comprovante dos Correios.</p>
+    <div style="display:flex;gap:10px">
+      <button id="tracking-confirm-btn" class="btn-primary" style="flex:1">Confirmar Envio</button>
+      <button class="modal-close btn-secondary" style="flex:1">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT PRODUCT MODAL -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal" style="max-width:600px;text-align:left;max-height:90vh;overflow-y:auto">
@@ -1309,12 +1327,13 @@ function orderActionHTML(o) {
   return `<button class="tbl-btn tbl-btn-view" onclick="openOrderDetail('${o.id}')">Ver</button>`;
 }
 
-updateOrderStatus = async function(id, status) {
+updateOrderStatus = async function(id, status, trackingCode = null) {
   const orders = getOrders();
   const order = orders.find(o => o.id === id);
   if (!order) return;
 
   order.status = status;
+  if (trackingCode) order.trackingCode = trackingCode;
   if (order.payment && typeof order.payment === 'object') {
     order.payment.status = status;
   }
@@ -1329,12 +1348,14 @@ updateOrderStatus = async function(id, status) {
   }
 
   saveOrders(orders);
-  if (window.FB) await window.FB.updateOrderStatus(id, status);
-  addLog('action', `Pedido #${id} → "${STATUS_CFG[status]?.label}".`);
+  if (window.FB) {
+    await window.FB.updateOrderStatus(id, status, trackingCode);
+  }
+  addLog('action', `Pedido #${id} → "${STATUS_CFG[status]?.label}".${trackingCode ? ' Rastreio: ' + trackingCode : ''}`);
 
   // Envia e-mail de atualização para o cliente
   if (order.email && typeof notificarMudancaStatus === 'function') {
-    notificarMudancaStatus(order, status).catch(e => console.warn('E-mail status:', e));
+    notificarMudancaStatus(order, status, trackingCode).catch(e => console.warn('E-mail status:', e));
   }
 
   renderOrdersTable(filterState);
@@ -1342,9 +1363,28 @@ updateOrderStatus = async function(id, status) {
 };
 
 window.setOrderStatus = function(id, status) {
+  if (status === 'shipped') {
+    const modal = document.getElementById('tracking-modal');
+    const input = document.getElementById('tracking-code-input');
+    input.value = '';
+    modal.classList.add('open');
+    modal._pendingOrderId = id;
+    setTimeout(() => input.focus(), 100);
+    return;
+  }
   updateOrderStatus(id, status);
   showToast(`Status atualizado: ${STATUS_CFG[status]?.label}`);
 };
+
+document.getElementById('tracking-confirm-btn').addEventListener('click', async () => {
+  const modal = document.getElementById('tracking-modal');
+  const id    = modal._pendingOrderId;
+  const code  = document.getElementById('tracking-code-input').value.trim().toUpperCase();
+  if (!code) { showToast('Informe o código de rastreio.', 'error'); return; }
+  modal.classList.remove('open');
+  await updateOrderStatus(id, 'shipped', code);
+  showToast('Pedido despachado! Cliente notificado. 🚚');
+});
 
 window.changeOrderStatus = function(sel) {
   updateOrderStatus(sel.dataset.orderid, sel.value);

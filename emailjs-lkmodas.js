@@ -160,13 +160,19 @@ async function sendEmailConfirmacaoCliente(order) {
 }
 
 /* ── Atualização de status ──────────────────────────────────── */
-async function sendEmailAtualizacaoStatus(order, newStatus) {
+async function sendEmailAtualizacaoStatus(order, newStatus, trackingCode = null) {
   const mensagens = {
     approved: 'Seu pagamento foi aprovado! Seu pedido já entrou em preparação.',
     shipped:  'Seu pedido foi despachado e está a caminho. Fique atento à entrega!',
     delivered:'Seu pedido foi entregue com sucesso. Aproveite suas peças!',
     rejected: 'Não conseguimos confirmar seu pagamento. Entre em contato pelo WhatsApp (16) 99360-3482.',
   };
+
+  const code = trackingCode || order.trackingCode || '';
+  const correiosUrl = code ? 'https://rastreamento.correios.com.br/app/index.php?objeto=' + code : '';
+  const trackingInfo = code
+    ? 'Código de Rastreio: ' + code + '\nRastrear nos Correios: ' + correiosUrl
+    : 'Acesse o site e vá em Minha Conta para acompanhar seu pedido';
 
   const statusMsg = mensagens[newStatus] || 'Seu pedido foi atualizado.';
   await sendEmailCliente({
@@ -188,7 +194,7 @@ async function sendEmailAtualizacaoStatus(order, newStatus) {
     delivery_cep:        String(order.cep      || '—'),
     shipping_type:       order.shippingType === 'retirar' ? 'Retirada na loja' : String(order.shippingType || 'PAC').toUpperCase(),
     pix_info:            '',
-    tracking_url:        'Acesse o site e vá em Minha Conta para acompanhar seu pedido',
+    tracking_url:        trackingInfo,
     whatsapp:            '(16) 99360-3482',
     instagram:           '@masculinalkmodas',
   });
@@ -202,6 +208,6 @@ async function notificarNovoPedido(order) {
   ]);
 }
 
-async function notificarMudancaStatus(order, newStatus) {
-  await sendEmailAtualizacaoStatus(order, newStatus);
+async function notificarMudancaStatus(order, newStatus, trackingCode = null) {
+  await sendEmailAtualizacaoStatus(order, newStatus, trackingCode);
 }

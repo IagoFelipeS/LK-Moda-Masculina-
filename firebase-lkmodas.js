@@ -290,11 +290,11 @@ const FIREBASE_CONFIG = {
           }
         },
 
-        async updateOrderStatus(orderId, status) {
+        async updateOrderStatus(orderId, status, trackingCode = null) {
           try {
-            await db.collection('orders').doc(orderId).update({
-              status, updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            });
+            const data = { status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+            if (trackingCode) data.trackingCode = trackingCode;
+            await db.collection('orders').doc(orderId).update(data);
             return { ok: true };
           } catch (err) {
             console.error('updateOrderStatus erro:', err);
