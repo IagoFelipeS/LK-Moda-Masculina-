@@ -153,17 +153,6 @@ const FIREBASE_CONFIG = {
 
         async saveProduct(product) {
           try {
-            const cu = auth.currentUser;
-            console.log('saveProduct — currentUser:', cu ? cu.email : 'null (não autenticado)');
-            if (!cu) {
-              // Sem usuário logado — tenta login de emergência
-              try {
-                await auth.signInWithEmailAndPassword('lkmodamasculina089@gmail.com','kamperlk122709!');
-                console.log('✅ saveProduct — re-login emergencial ok');
-              } catch(e) {
-                console.error('❌ saveProduct — re-login emergencial falhou:', e.message);
-              }
-            }
             const id  = String(product.id || Date.now());
             const ref = db.collection('products').doc(id);
             const ex  = await ref.get();
