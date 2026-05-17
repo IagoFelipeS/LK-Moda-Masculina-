@@ -26,9 +26,14 @@ function initEmailJS() {
 function fmtBRL(v) {
   return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
 }
-function fmtDateBR(iso) {
+function fmtDateBR(val) {
   try {
-    return new Date(iso).toLocaleString('pt-BR', {
+    // Suporta Firestore Timestamp ({seconds, nanoseconds}), Date, string ISO
+    const d = val?.seconds ? new Date(val.seconds * 1000)
+            : val?.toDate  ? val.toDate()
+            : new Date(val);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString('pt-BR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
@@ -54,12 +59,13 @@ function buildItemsList(items) {
     const products = Array.isArray(window.__LK_PRODUCTS_CACHE) ? window.__LK_PRODUCTS_CACHE : [];
     return items.map(item => {
       const p    = products.find(pr => String(pr.id) === String(item.id));
-      const name = p ? p.name : (item.name || 'Produto #' + item.id);
+      // Usa nome do item salvo no carrinho, ou busca no cache, ou fallback
+      const name = item.name || (p ? p.name : ('Produto #' + item.id));
       const qty  = item.qty || 1;
-      const priceVal = p ? p.price * qty : (item.price ? item.price * qty : 0);
-      const price = priceVal > 0 ? ' - ' + fmtBRL(priceVal) : '';
+      const priceVal = item.price ? item.price * qty : (p ? p.price * qty : 0);
+      const price = priceVal > 0 ? ' — ' + fmtBRL(priceVal) : '';
       return name + ' x' + qty + price;
-    }).join(' | ');
+    }).join('\n');
   } catch (e) {
     return items.length + ' item(ns)';
   }
@@ -121,12 +127,12 @@ async function sendEmailConfirmacaoCliente(order) {
     : '';
 
   await sendEmailCliente({
-    // Identificação do cliente
-    customer_name:    String(order.nome  || 'Cliente'),
-    customer_email:   String(order.email || ''),
-
-    // Assunto dinâmico do e-mail
-    email_assunto:    'Pedido ' + order.id + ' recebido',
+    customer_name:       String(order.nome  || 'Cliente'),
+    customer_email:      String(order.email || ''),
+    email_assunto:       'Pedido ' + order.id + ' recebido',
+    mensagem_principal:  'Recebemos seu pedido e estamos muito felizes com sua compra! 🎉',
+    status_atual:        '',
+    status_mensagem:     '',
 
     // Dados do pedido — cada campo separado
     order_id:         String(order.id || '—'),
@@ -162,27 +168,29 @@ async function sendEmailAtualizacaoStatus(order, newStatus) {
     rejected: 'Não conseguimos confirmar seu pagamento. Entre em contato pelo WhatsApp (16) 99360-3482.',
   };
 
+  const statusMsg = mensagens[newStatus] || 'Seu pedido foi atualizado.';
   await sendEmailCliente({
-    customer_name:    String(order.nome  || 'Cliente'),
-    customer_email:   String(order.email || ''),
-    email_assunto:    'Atualização do Pedido ' + order.id,
-    order_id:         String(order.id || '—'),
-    order_date:       fmtDateBR(order.createdAt),
-    payment_method:   paymentLabel(order.paymentMethod),
-    order_total:      fmtBRL(order.total),
-    subtotal:         fmtBRL(order.subtotal || order.total),
-    shipping_cost:    order.shippingCost > 0 ? fmtBRL(order.shippingCost) : 'GRÁTIS',
-    items_list:       buildItemsList(order.items),
-    delivery_address: String(order.endereco || '—'),
-    delivery_city:    String(order.cidade   || '—'),
-    delivery_cep:     String(order.cep      || '—'),
-    shipping_type:    order.shippingType === 'retirar' ? 'Retirada na loja' : String(order.shippingType || 'PAC').toUpperCase(),
-    pix_info:         '',
-    status_atual:     statusLabel(newStatus),
-    status_mensagem:  mensagens[newStatus] || 'Seu pedido foi atualizado.',
-    tracking_url:     'Acesse o site e vá em Minha Conta para acompanhar seu pedido',
-    whatsapp:         '(16) 99360-3482',
-    instagram:        '@masculinalkmodas',
+    customer_name:       String(order.nome  || 'Cliente'),
+    customer_email:      String(order.email || ''),
+    email_assunto:       'Atualização do Pedido ' + order.id,
+    mensagem_principal:  '🔔 Há uma atualização no seu pedido!',
+    status_atual:        statusLabel(newStatus),
+    status_mensagem:     statusMsg,
+    order_id:            String(order.id || '—'),
+    order_date:          fmtDateBR(order.createdAt),
+    payment_method:      paymentLabel(order.paymentMethod),
+    order_total:         fmtBRL(order.total),
+    subtotal:            fmtBRL(order.subtotal || order.total),
+    shipping_cost:       order.shippingCost > 0 ? fmtBRL(order.shippingCost) : 'GRÁTIS',
+    items_list:          buildItemsList(order.items),
+    delivery_address:    String(order.endereco || '—'),
+    delivery_city:       String(order.cidade   || '—'),
+    delivery_cep:        String(order.cep      || '—'),
+    shipping_type:       order.shippingType === 'retirar' ? 'Retirada na loja' : String(order.shippingType || 'PAC').toUpperCase(),
+    pix_info:            '',
+    tracking_url:        'Acesse o site e vá em Minha Conta para acompanhar seu pedido',
+    whatsapp:            '(16) 99360-3482',
+    instagram:           '@masculinalkmodas',
   });
 }
 
