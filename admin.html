@@ -818,7 +818,7 @@ const SECURITY_LOG_KEY  = 'lkmodas_security_log';
 const ORDERS_KEY        = 'lkmodas_orders';
 const MAX_ATTEMPTS      = 3;
 const LOCK_MS           = 5 * 60 * 1000;
-const DEFAULT_ADMIN_CREDS = { email:'lkmodamasculina089@gmail.com', password:'kamperlk122709!' };
+const DEFAULT_ADMIN_EMAIL = 'lkmodamasculina089@gmail.com';
 
 const SESSION_KEYS = new Set(['lkmodas_admin','lkmodas_security_log','lkmodas_admin_attempts','lkmodas_admin_lock','lkmodas_admin_creds','lkmodas_admin_timeout']);
 const gget = (k,d=null) => { try { const store = SESSION_KEYS.has(k) ? sessionStorage : localStorage; const v=store.getItem(k); return v?JSON.parse(v):d; } catch { return d; } };
@@ -898,23 +898,15 @@ const ADMIN_EMAIL_ALIASES = ['lkmodamasculina089@gmail.com'];
 
 function getCreds() {
   const stored = gget(ADMIN_CREDS_KEY, null);
-  const normalized = {
-    email: String(stored?.email || '').trim().toLowerCase(),
-    password: String(stored?.password || '').trim()
+  return {
+    email:    String(stored?.email    || DEFAULT_ADMIN_EMAIL).trim().toLowerCase(),
+    password: String(stored?.password || '').trim(),
   };
-
-  if (normalized.email !== DEFAULT_ADMIN_CREDS.email || !normalized.password) {
-    gset(ADMIN_CREDS_KEY, DEFAULT_ADMIN_CREDS);
-    return { ...DEFAULT_ADMIN_CREDS };
-  }
-
-  return normalized;
 }
 function isLocked() { return lockUntil > Date.now(); }
-function isAllowedAdminEmail(email, creds) {
+function isAllowedAdminEmail(email) {
   const normalized = String(email || '').trim().toLowerCase();
-  const allowed = new Set([String(creds?.email || '').trim().toLowerCase(), ...ADMIN_EMAIL_ALIASES]);
-  return allowed.has(normalized);
+  return new Set([DEFAULT_ADMIN_EMAIL, ...ADMIN_EMAIL_ALIASES]).has(normalized);
 }
 
 function updateDots() {
@@ -947,18 +939,24 @@ document.getElementById('btn-admin-login').addEventListener('click', async () =>
   const email = document.getElementById('admin-email').value.trim().toLowerCase();
   const pass  = document.getElementById('admin-pass').value;
   const errEl = document.getElementById('admin-login-error');
-  const creds = getCreds();
 
-  if (isAllowedAdminEmail(email, creds) && pass === creds.password) {
-    if (window.FB?.loginAdmin) {
-      const fbLogin = await window.FB.loginAdmin(email, pass);
-      if (!fbLogin?.ok) {
-        errEl.textContent = fbLogin?.message || 'Falha ao autenticar no Firebase.';
-        errEl.classList.add('show');
-        addLog('fail', `Firebase recusou login para "${email}".`);
-        return;
-      }
-    }
+  if (!isAllowedAdminEmail(email)) {
+    errEl.textContent = 'E-mail não autorizado.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  // Valida credenciais diretamente pelo Firebase (sem senha hardcoded no código)
+  if (!window.FB?.loginAdmin) {
+    errEl.textContent = 'Firebase indisponível. Tente novamente.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const fbLogin = await window.FB.loginAdmin(email, pass);
+  if (fbLogin?.ok) {
+    // Armazena em sessionStorage para re-auth automático (limpa ao fechar aba)
+    gset(ADMIN_CREDS_KEY, { email, password: pass });
     loginAttempts = 0; gset('lkmodas_admin_attempts', 0);
     pendingCode = String(Math.floor(100000 + Math.random()*900000));
     document.getElementById('demo-code-hint').textContent = `⚠️ DEMO — Código: ${pendingCode}`;
@@ -1004,16 +1002,6 @@ document.getElementById('btn-verify-2fa').addEventListener('click', async () => 
     gset(ADMIN_SESSION_KEY, { email: finalEmail, loginTime: Date.now() });
     addLog('success', `Login bem-sucedido: ${finalEmail}`);
     pendingCode = null;
-    
-    // 🔐 Autentica no Firebase com credenciais do admin (sem gravar sessão do cliente)
-    if (window.FB?.loginAdmin) {
-      try {
-        await window.FB.loginAdmin(finalEmail, getCreds().password);
-      } catch (e) {
-        console.warn('Firebase login falhou (pode estar offline):', e);
-      }
-    }
-    
     showDashboard();
   } else {
     errEl.textContent='Código incorreto.'; errEl.classList.add('show');
