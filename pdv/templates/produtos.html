@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Produtos{% endblock %}
+{% block page_title %}Produtos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Produtos Cadastrados</h2>
+  <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Novo Produto
+  </a>
+</div>
+
+<form method="GET" class="toolbar">
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou código...">
+  </div>
+  <select name="cat" style="padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);font-size:.9rem;color:var(--text);">
+    <option value="">Todas as categorias</option>
+    {% for c in cats %}
+    <option value="{{ c.categoria }}" {% if c.categoria == cat_sel %}selected{% endif %}>{{ c.categoria }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+  {% if q or cat_sel %}
+  <a href="{{ url_for('produtos') }}" class="btn btn-ghost">Limpar</a>
+  {% endif %}
+</form>
+
+<div class="card">
+  <div class="card-header">
+    <h3>{{ lista|length }} produto{{ 's' if lista|length != 1 else '' }} encontrado{{ 's' if lista|length != 1 else '' }}</h3>
+  </div>
+  <div class="table-wrap">
+    {% if lista %}
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Custo</th>
+          <th>Margem</th>
+          <th>Venda</th>
+          <th>Estoque</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in lista %}
+        <tr>
+          <td><code style="font-size:.8rem;background:var(--cream-md);padding:2px 7px;border-radius:4px;">{{ p.codigo }}</code></td>
+          <td><strong>{{ p.nome }}</strong></td>
+          <td>{% if p.categoria %}<span class="badge badge-brown">{{ p.categoria }}</span>{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+          <td style="color:var(--text-muted);">R$ {{ "%.2f"|format(p.preco_custo) }}</td>
+          <td>{% if p.margem > 0 %}<span style="color:var(--success);font-weight:600;">{{ "%.1f"|format(p.margem) }}%</span>{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+          <td style="font-weight:700;color:var(--brown-dk);">R$ {{ "%.2f"|format(p.preco_venda) }}</td>
+          <td>
+            {% if p.estoque <= 0 %}
+              <span class="badge badge-red stock-low">Sem estoque</span>
+            {% elif p.estoque <= 5 %}
+              <span class="stock-warn">{{ p.estoque }} un.</span>
+            {% else %}
+              <span class="stock-ok">{{ p.estoque }} un.</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="{{ url_for('editar_produto', pid=p.id) }}" class="btn btn-outline btn-sm" title="Editar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Editar
+              </a>
+              {% if session.perfil == 'admin' %}
+              <form method="POST" action="{{ url_for('excluir_produto', pid=p.id) }}" onsubmit="return confirm('Excluir este produto?')">
+                <button type="submit" class="btn btn-danger btn-sm" title="Excluir">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+      <p>Nenhum produto encontrado.</p>
+      <a href="{{ url_for('novo_produto') }}" class="btn btn-primary btn-sm" style="margin-top:12px;">Cadastrar primeiro produto</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

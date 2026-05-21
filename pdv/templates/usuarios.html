@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Usuários{% endblock %}
+{% block page_title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Gerenciar Usuários</h2>
+  <a href="{{ url_for('novo_usuario') }}" class="btn btn-primary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Novo Usuário
+  </a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Usuário</th>
+          <th>Perfil</th>
+          <th>Criado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in lista %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="user-avatar" style="width:32px;height:32px;font-size:.82rem;flex-shrink:0;">{{ u.nome[0]|upper }}</div>
+              <strong>{{ u.nome }}</strong>
+            </div>
+          </td>
+          <td><code style="background:var(--cream-md);padding:2px 8px;border-radius:4px;font-size:.82rem;">{{ u.usuario }}</code></td>
+          <td>
+            {% if u.perfil == 'admin' %}
+              <span class="badge badge-brown">Admin</span>
+            {% else %}
+              <span class="badge" style="background:var(--info-lgt);color:var(--info);">Vendedor</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--text-muted);font-size:.85rem;">{{ u.criado_em[:10] }}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <!-- Alterar senha -->
+              <button class="btn btn-outline btn-sm" onclick="abrirSenha({{ u.id }}, '{{ u.nome }}')" title="Alterar senha">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Senha
+              </button>
+              {% if u.id != session.uid %}
+              <form method="POST" action="{{ url_for('excluir_usuario', uid=u.id) }}" onsubmit="return confirm('Remover usuário {{ u.nome }}?')">
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                  Remover
+                </button>
+              </form>
+              {% else %}
+              <span style="font-size:.75rem;color:var(--text-muted);padding:6px 0;">(você)</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal alterar senha -->
+<div class="modal-overlay" id="modalSenha">
+  <div class="modal">
+    <div class="modal-icon" style="background:var(--brown-pale);color:var(--brown);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <h3>Alterar Senha</h3>
+    <p id="modalSenhaUser" style="margin-bottom:18px;"></p>
+    <form method="POST" id="formSenha" action="">
+      <div class="form-group" style="text-align:left;">
+        <label>Nova Senha (mínimo 4 caracteres)</label>
+        <input type="password" name="nova_senha" id="novaSenha" placeholder="••••••••" minlength="4" required autofocus>
+      </div>
+      <div class="modal-actions" style="margin-top:8px;">
+        <button type="button" class="btn btn-ghost" onclick="fecharModalSenha()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar Senha</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function abrirSenha(uid, nome) {
+  document.getElementById('formSenha').action = `/usuarios/senha/${uid}`;
+  document.getElementById('modalSenhaUser').textContent = `Usuário: ${nome}`;
+  document.getElementById('novaSenha').value = '';
+  document.getElementById('modalSenha').classList.add('open');
+  setTimeout(()=> document.getElementById('novaSenha').focus(), 100);
+}
+function fecharModalSenha() {
+  document.getElementById('modalSenha').classList.remove('open');
+}
+document.getElementById('modalSenha').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalSenha();
+});
+</script>
+{% endblock %}
