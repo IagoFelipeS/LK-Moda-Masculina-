@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon brown">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div class="stat-val">R$ {{ "%.2f"|format(vh.t) }}</div>
+    <div class="stat-label">Vendas hoje</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-val">{{ vh.c }}</div>
+    <div class="stat-label">Transações hoje</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+    </div>
+    <div class="stat-val">{{ tp.c }}</div>
+    <div class="stat-label">Produtos ativos</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="stat-val">{{ eb.c }}</div>
+    <div class="stat-label">Estoque baixo (≤5)</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>Últimas Vendas</h3>
+    <a href="{{ url_for('pdv') }}" class="btn btn-primary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova Venda
+    </a>
+  </div>
+  <div class="table-wrap">
+    {% if recentes %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data / Hora</th>
+          <th>Vendedor</th>
+          <th>Pagamento</th>
+          <th>Total</th>
+          <th>Troco</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in recentes %}
+        <tr>
+          <td><span style="color:var(--text-muted);font-size:.8rem;">#{{ v.id }}</span></td>
+          <td>{{ v.criado_em[:16].replace('T',' ') }}</td>
+          <td>{{ v.usuario_nome }}</td>
+          <td>
+            {% if v.pagamento == 'dinheiro' %}
+              <span class="badge badge-green">Dinheiro</span>
+            {% elif v.pagamento == 'pix' %}
+              <span class="badge badge-brown">Pix</span>
+            {% else %}
+              <span class="badge" style="background:var(--info-lgt);color:var(--info);">Cartão</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:700;color:var(--brown-dk);">R$ {{ "%.2f"|format(v.total) }}</td>
+          <td>{% if v.troco > 0 %}R$ {{ "%.2f"|format(v.troco) }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <p>Nenhuma venda registrada ainda.</p>
+      <a href="{{ url_for('pdv') }}" class="btn btn-primary btn-sm" style="margin-top:12px;">Abrir Caixa</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

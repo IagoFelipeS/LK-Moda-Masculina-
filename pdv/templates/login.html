@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Jessica Thaís PDV</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+body { background: radial-gradient(135deg, #F5E8C8 0%, #FAF7F2 50%, #EDD5A3 100%); }
+.particles { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+.particle {
+  position:absolute;
+  background:var(--brown);
+  border-radius:50%;
+  opacity:.08;
+  animation: float linear infinite;
+}
+@keyframes float {
+  0%   { transform:translateY(100vh) rotate(0deg); opacity:0; }
+  10%  { opacity:.08; }
+  90%  { opacity:.08; }
+  100% { transform:translateY(-100px) rotate(720deg); opacity:0; }
+}
+.login-page { position:relative; z-index:1; }
+.login-card { border:1px solid var(--cream-dk); }
+.brand-ornament {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--brown-lgt);
+  font-size:.72rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.brand-ornament::before,.brand-ornament::after {
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--border);
+}
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <!-- Logo SVG grande para o login -->
+      <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:140px;">
+        <circle cx="90" cy="90" r="86" fill="#FAF7F2" stroke="#C4832A" stroke-width="2"/>
+        <circle cx="90" cy="90" r="78" fill="none" stroke="#E8C47A" stroke-width=".8" stroke-dasharray="4 4"/>
+        <!-- J grande -->
+        <text x="18" y="118" font-family="Georgia,serif" font-size="100" font-weight="700" fill="#C4832A" opacity=".95">J</text>
+        <!-- T grande -->
+        <text x="72" y="118" font-family="Georgia,serif" font-size="100" font-weight="700" fill="#C4832A" opacity=".95">T</text>
+        <!-- Figura feminina -->
+        <g transform="translate(118,24)" fill="#C4832A">
+          <ellipse cx="13" cy="8" rx="13" ry="4.5"/>
+          <rect x="10" y="6" width="6" height="8" rx="3"/>
+          <circle cx="13" cy="20" r="5"/>
+          <path d="M9 26 Q7 40 4 48 Q9 46 13 47 Q17 46 22 48 Q19 40 17 26 Q13 29 9 26Z" opacity=".85"/>
+        </g>
+      </svg>
+
+      <h1>Jessica Thaís</h1>
+      <div class="brand-ornament">moda feminina</div>
+      <p style="font-size:.78rem;color:var(--text-muted);letter-spacing:.06em;">Sistema de Vendas</p>
+    </div>
+
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in msgs %}
+        <div class="alert alert-{{ cat }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" id="loginForm">
+      <div class="form-group">
+        <label>Usuário</label>
+        <input type="text" name="usuario" placeholder="Digite seu usuário" autocomplete="username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <div style="position:relative;">
+          <input type="password" name="senha" id="senhaInput" placeholder="••••••••" autocomplete="current-password" required>
+          <button type="button" onclick="toggleSenha()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);display:flex;padding:4px;" id="eyeBtn">
+            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="btnLogin">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+        </svg>
+        Entrar no Sistema
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:18px;font-size:.75rem;color:var(--text-muted);">
+      Jessica Thaís PDV &mdash; v1.0
+    </p>
+  </div>
+</div>
+
+<script>
+// Partículas flutuantes
+(function() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const s = Math.random()*12+4;
+    p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*12+8}s;animation-delay:${Math.random()*8}s;`;
+    c.appendChild(p);
+  }
+})();
+
+function toggleSenha() {
+  const i = document.getElementById('senhaInput');
+  const t = i.type === 'password';
+  i.type = t ? 'text' : 'password';
+  document.getElementById('eyeIcon').innerHTML = t
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>';
+}
+
+document.getElementById('loginForm').addEventListener('submit', function() {
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true;
+  btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Entrando...';
+});
+</script>
+</body>
+</html>

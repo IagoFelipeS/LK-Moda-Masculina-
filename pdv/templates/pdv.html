@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% block title %}Caixa{% endblock %}
+{% block page_title %}
+  <span style="display:flex;align-items:center;gap:10px;">
+    <span style="width:10px;height:10px;background:#2E7D32;border-radius:50%;box-shadow:0 0 8px #2E7D32;animation:pulse 2s infinite;"></span>
+    Caixa Aberto
+  </span>
+{% endblock %}
+
+{% block content %}
+<style>
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+</style>
+
+<div class="pdv-layout">
+  <!-- Coluna esquerda: busca + carrinho -->
+  <div class="pdv-left">
+    <div class="pdv-search">
+      <div class="pdv-search-input" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="busca" placeholder="Buscar produto por nome ou código..." autocomplete="off" autofocus>
+        <div class="pdv-results" id="resultados"></div>
+      </div>
+    </div>
+
+    <div class="pdv-items" id="carrinho">
+      <div class="pdv-empty" id="carrinhoVazio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.99-1.85l1.38-7.15H6"/>
+        </svg>
+        <p>O carrinho está vazio</p>
+        <small>Busque um produto acima para adicionar</small>
+      </div>
+    </div>
+
+    <!-- Rodapé com subtotal de itens -->
+    <div style="padding:10px 16px;border-top:1px solid var(--cream-md);display:flex;justify-content:space-between;align-items:center;font-size:.82rem;color:var(--text-muted);">
+      <span id="qtdItens">0 itens</span>
+      <button class="btn btn-ghost btn-sm" onclick="limparCarrinho()" id="btnLimpar" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Limpar
+      </button>
+    </div>
+  </div>
+
+  <!-- Coluna direita: pagamento -->
+  <div class="pdv-right">
+    <div style="padding:18px 16px;border-bottom:1px solid var(--cream-md);">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:14px;">Resumo da Venda</p>
+
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;font-size:.88rem;" id="resumoItens">
+        <p style="color:var(--text-muted);font-style:italic;">Nenhum item adicionado</p>
+      </div>
+
+      <div style="height:1px;background:var(--cream-dk);margin:12px 0;"></div>
+
+      <div class="pdv-total">
+        <span class="label">Total</span>
+        <span class="value" id="totalDisplay">R$ 0,00</span>
+      </div>
+    </div>
+
+    <div class="pdv-payment" style="flex:1;overflow-y:auto;">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px;">Forma de Pagamento</p>
+
+      <div class="pay-methods">
+        <button class="pay-btn" onclick="selecionarPag('dinheiro',this)" id="btnDinheiro">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+          Dinheiro
+        </button>
+        <button class="pay-btn" onclick="selecionarPag('pix',this)" id="btnPix">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l4 4M4 20l4-4M20 4l-4 4M20 20l-4-4M8 8h8v8H8z"/></svg>
+          Pix
+        </button>
+        <button class="pay-btn" onclick="selecionarPag('cartao',this)" id="btnCartao">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Cartão
+        </button>
+      </div>
+
+      <!-- Troco (só para dinheiro) -->
+      <div class="troco-box" id="trocoBox">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Valor recebido (R$)</label>
+          <input type="number" id="valorPago" placeholder="0,00" min="0" step="0.01" oninput="calcTroco()">
+        </div>
+        <div class="troco-result" id="trocoResult" style="display:none;">
+          <span>Troco:</span>
+          <span id="trocoValor">R$ 0,00</span>
+        </div>
+      </div>
+
+      <button class="btn btn-success btn-full" id="btnFinalizar" onclick="abrirConfirmacao()" disabled style="margin-top:8px;font-size:1rem;padding:14px;letter-spacing:.04em;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Finalizar Venda
+      </button>
+
+      <button class="btn btn-ghost btn-full" onclick="limparCarrinho()" style="margin-top:8px;">
+        Cancelar / Nova Venda
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmação -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal">
+    <div class="modal-icon" id="modalIcon"></div>
+    <h3 id="modalTitulo"></h3>
+    <p id="modalMsg"></p>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let carrinho = [];
+let pagamentoSel = null;
+let buscarTimeout = null;
+
+// ── Busca de produtos ────────────────────────────────────
+const inputBusca = document.getElementById('busca');
+const resultados = document.getElementById('resultados');
+
+inputBusca.addEventListener('input', function() {
+  clearTimeout(buscarTimeout);
+  const q = this.value.trim();
+  if (q.length < 1) { fecharResultados(); return; }
+  buscarTimeout = setTimeout(() => buscarProdutos(q), 220);
+});
+
+inputBusca.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') fecharResultados();
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.pdv-search-input')) fecharResultados();
+});
+
+async function buscarProdutos(q) {
+  const r = await fetch(`/api/buscar?q=${encodeURIComponent(q)}`);
+  const data = await r.json();
+  if (!data.length) {
+    resultados.innerHTML = '<div style="padding:14px 16px;color:var(--text-muted);font-size:.88rem;text-align:center;">Nenhum produto encontrado</div>';
+  } else {
+    resultados.innerHTML = data.map(p => `
+      <div class="pdv-result-item" onclick="adicionarItem(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+        <div>
+          <div class="pdv-result-name">${p.nome}</div>
+          <div class="pdv-result-code">Cód: ${p.codigo} ${p.categoria ? '· '+p.categoria : ''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="pdv-result-price">R$ ${fmtNum(p.preco_venda)}</div>
+          <div class="pdv-result-stock">Estoque: ${p.estoque}</div>
+        </div>
+      </div>`).join('');
+  }
+  resultados.classList.add('open');
+}
+
+function fecharResultados() {
+  resultados.classList.remove('open');
+  resultados.innerHTML = '';
+}
+
+// ── Carrinho ─────────────────────────────────────────────
+function adicionarItem(p) {
+  fecharResultados();
+  inputBusca.value = '';
+  inputBusca.focus();
+
+  const idx = carrinho.findIndex(i => i.id === p.id);
+  if (idx >= 0) {
+    if (carrinho[idx].quantidade >= p.estoque) {
+      showToast('Estoque insuficiente!', 'erro');
+      return;
+    }
+    carrinho[idx].quantidade++;
+    carrinho[idx].subtotal = carrinho[idx].quantidade * carrinho[idx].preco_unit;
+  } else {
+    carrinho.push({
+      id: p.id, codigo: p.codigo, nome: p.nome,
+      preco_unit: p.preco_venda, quantidade: 1,
+      subtotal: p.preco_venda, estoque_max: p.estoque
+    });
+  }
+  renderCarrinho();
+  showToast(`${p.nome} adicionado!`, 'ok');
+}
+
+function alterarQtd(id, delta) {
+  const idx = carrinho.findIndex(i => i.id === id);
+  if (idx < 0) return;
+  carrinho[idx].quantidade += delta;
+  if (carrinho[idx].quantidade <= 0) {
+    carrinho.splice(idx, 1);
+  } else {
+    if (carrinho[idx].quantidade > carrinho[idx].estoque_max) {
+      carrinho[idx].quantidade = carrinho[idx].estoque_max;
+      showToast('Limite de estoque atingido.', 'warn');
+    }
+    carrinho[idx].subtotal = carrinho[idx].quantidade * carrinho[idx].preco_unit;
+  }
+  renderCarrinho();
+}
+
+function removerItem(id) {
+  carrinho = carrinho.filter(i => i.id !== id);
+  renderCarrinho();
+}
+
+function limparCarrinho() {
+  carrinho = [];
+  pagamentoSel = null;
+  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('trocoBox').classList.remove('show');
+  document.getElementById('valorPago').value = '';
+  document.getElementById('trocoResult').style.display = 'none';
+  renderCarrinho();
+}
+
+function renderCarrinho() {
+  const c = document.getElementById('carrinho');
+  const vazio = document.getElementById('carrinhoVazio');
+  const resumo = document.getElementById('resumoItens');
+  const total = carrinho.reduce((s, i) => s + i.subtotal, 0);
+
+  // Carrinho
+  if (!carrinho.length) {
+    while (c.firstChild && c.firstChild !== vazio) c.removeChild(c.firstChild);
+    vazio.style.display = 'flex';
+    resumo.innerHTML = '<p style="color:var(--text-muted);font-style:italic;">Nenhum item adicionado</p>';
+    document.getElementById('qtdItens').textContent = '0 itens';
+    document.getElementById('btnLimpar').style.display = 'none';
+  } else {
+    vazio.style.display = 'none';
+    const items = c.querySelectorAll('.cart-item');
+    items.forEach(el => el.remove());
+    carrinho.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'cart-item';
+      el.innerHTML = `
+        <div>
+          <div class="cart-item-name">${item.nome}</div>
+          <div class="cart-item-code">Cód: ${item.codigo} · R$ ${fmtNum(item.preco_unit)} un.</div>
+        </div>
+        <div class="cart-item-qty">
+          <button class="qty-btn" onclick="alterarQtd(${item.id},-1)">−</button>
+          <span class="qty-num">${item.quantidade}</span>
+          <button class="qty-btn" onclick="alterarQtd(${item.id},1)">+</button>
+        </div>
+        <span class="cart-item-price">R$ ${fmtNum(item.subtotal)}</span>
+        <button class="cart-item-del" onclick="removerItem(${item.id})" title="Remover">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>`;
+      c.appendChild(el);
+    });
+    const qtd = carrinho.reduce((s, i) => s + i.quantidade, 0);
+    document.getElementById('qtdItens').textContent = `${qtd} ${qtd===1?'item':'itens'}`;
+    document.getElementById('btnLimpar').style.display = 'flex';
+    resumo.innerHTML = carrinho.map(i =>
+      `<div style="display:flex;justify-content:space-between;"><span>${i.nome} ×${i.quantidade}</span><span style="font-weight:600;color:var(--brown-dk);">R$ ${fmtNum(i.subtotal)}</span></div>`
+    ).join('');
+  }
+
+  document.getElementById('totalDisplay').textContent = `R$ ${fmtNum(total)}`;
+  calcTroco();
+  atualizarBtnFinalizar();
+}
+
+// ── Pagamento ────────────────────────────────────────────
+function selecionarPag(tipo, btn) {
+  pagamentoSel = tipo;
+  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const trocoBox = document.getElementById('trocoBox');
+  if (tipo === 'dinheiro') {
+    trocoBox.classList.add('show');
+    document.getElementById('valorPago').focus();
+  } else {
+    trocoBox.classList.remove('show');
+    document.getElementById('trocoResult').style.display = 'none';
+  }
+  atualizarBtnFinalizar();
+}
+
+function calcTroco() {
+  const total = carrinho.reduce((s, i) => s + i.subtotal, 0);
+  const pago = parseFloat(document.getElementById('valorPago').value) || 0;
+  const tr = document.getElementById('trocoResult');
+  if (pagamentoSel === 'dinheiro' && pago > 0) {
+    const troco = Math.max(0, pago - total);
+    tr.style.display = 'flex';
+    document.getElementById('trocoValor').textContent = `R$ ${fmtNum(troco)}`;
+    if (pago < total) {
+      tr.style.background = 'var(--danger-lgt)';
+      tr.querySelector('span:last-child').style.color = 'var(--danger)';
+      tr.querySelector('span:first-child').textContent = 'Falta:';
+      document.getElementById('trocoValor').textContent = `R$ ${fmtNum(total - pago)}`;
+    } else {
+      tr.style.background = 'var(--success-lgt)';
+      tr.querySelector('span:last-child').style.color = 'var(--success)';
+      tr.querySelector('span:first-child').textContent = 'Troco:';
+    }
+  } else {
+    tr.style.display = 'none';
+  }
+  atualizarBtnFinalizar();
+}
+
+function atualizarBtnFinalizar() {
+  const total = carrinho.reduce((s, i) => s + i.subtotal, 0);
+  const pago = parseFloat(document.getElementById('valorPago').value) || 0;
+  const btn = document.getElementById('btnFinalizar');
+  const ok = carrinho.length > 0 && pagamentoSel &&
+    (pagamentoSel !== 'dinheiro' || pago >= total);
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '.5';
+}
+
+// ── Finalizar ────────────────────────────────────────────
+function abrirConfirmacao() {
+  const total = carrinho.reduce((s, i) => s + i.subtotal, 0);
+  const pago  = parseFloat(document.getElementById('valorPago').value) || 0;
+  const troco = Math.max(0, pago - total);
+  const pagLabel = {dinheiro:'Dinheiro',pix:'Pix',cartao:'Cartão'}[pagamentoSel];
+
+  let detalhe = `<strong>Total: R$ ${fmtNum(total)}</strong><br>Pagamento: ${pagLabel}`;
+  if (pagamentoSel === 'dinheiro') detalhe += `<br>Troco: R$ ${fmtNum(troco)}`;
+
+  abrirModal('success',
+    'Confirmar Venda?',
+    detalhe,
+    `<button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+     <button class="btn btn-success" onclick="finalizarVenda()">Confirmar</button>`
+  );
+}
+
+async function finalizarVenda() {
+  fecharModal();
+  const total = carrinho.reduce((s, i) => s + i.subtotal, 0);
+  const pago  = parseFloat(document.getElementById('valorPago').value) || 0;
+
+  const r = await fetch('/api/venda', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      itens: carrinho,
+      pagamento: pagamentoSel,
+      valor_pago: pagamentoSel === 'dinheiro' ? pago : total
+    })
+  });
+  const data = await r.json();
+
+  if (data.ok) {
+    const troco = data.troco;
+    let msg = `Venda #${data.venda_id} registrada!<br>Total: R$ ${fmtNum(data.total)}`;
+    if (troco > 0) msg += `<br><strong>Troco: R$ ${fmtNum(troco)}</strong>`;
+    abrirModal('success', 'Venda Concluída!', msg,
+      `<button class="btn btn-primary" onclick="fecharModal();limparCarrinho();">Nova Venda</button>`
+    );
+    limparCarrinho();
+  } else {
+    showToast('Erro ao finalizar: ' + data.msg, 'erro');
+  }
+}
+
+// ── Modal ────────────────────────────────────────────────
+function abrirModal(tipo, titulo, msg, actions) {
+  const icons = {
+    success: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    danger:  `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+  };
+  document.getElementById('modalIcon').className = `modal-icon ${tipo}`;
+  document.getElementById('modalIcon').innerHTML = icons[tipo]||'';
+  document.getElementById('modalTitulo').textContent = titulo;
+  document.getElementById('modalMsg').innerHTML = msg;
+  document.getElementById('modalActions').innerHTML = actions;
+  document.getElementById('modalConfirm').classList.add('open');
+}
+function fecharModal() {
+  document.getElementById('modalConfirm').classList.remove('open');
+}
+document.getElementById('modalConfirm').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+// ── Utils ────────────────────────────────────────────────
+function fmtNum(n) {
+  return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+</script>
+{% endblock %}

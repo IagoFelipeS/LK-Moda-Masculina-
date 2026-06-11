@@ -1,0 +1,52 @@
+===============================================
+  JESSICA THAÍS — Sistema PDV
+  Versão 1.0
+===============================================
+
+INSTALAÇÃO NO PC (Windows)
+---------------------------
+1. Instale o Python 3.10 ou superior:
+   https://www.python.org/downloads/
+   (marque "Add Python to PATH" durante a instalação)
+
+2. Copie a pasta "pdv" para o PC desejado
+
+3. Dê dois cliques no arquivo "iniciar.bat"
+   → O sistema abrirá automaticamente no navegador
+
+ACESSO PELO NAVEGADOR
+---------------------
+  Endereço: http://localhost:5000
+  Usuário:  admin
+  Senha:    admin123
+
+  IMPORTANTE: Troque a senha do admin no primeiro acesso!
+  Menu: Usuários → Alterar Senha
+
+MÚLTIPLOS COMPUTADORES NA MESMA REDE
+-------------------------------------
+  Instale apenas em 1 PC (servidor)
+  Nos outros PCs, acesse pelo navegador:
+  http://IP_DO_PC_SERVIDOR:5000
+
+  Para descobrir o IP do servidor: Win+R → cmd → ipconfig
+
+PERFIS DE USUÁRIO
+-----------------
+  ADMIN    → Acesso total (relatórios, usuários, produtos, PDV)
+  VENDEDOR → PDV, cadastro e lista de produtos
+
+BANCO DE DADOS
+--------------
+  Arquivo: pdv/pdv.db
+  Faça backup deste arquivo regularmente!
+  (copiar para pendrive ou nuvem)
+
+SUPORTE / MANUTENÇÃO
+--------------------
+  Arquivos editáveis:
+  - app.py          → Lógica do sistema (Python)
+  - templates/*.html → Telas do sistema (HTML)
+  - static/css/style.css → Visual / cores
+
+===============================================
