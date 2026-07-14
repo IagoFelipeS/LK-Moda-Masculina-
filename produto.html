@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Produto — LK Moda Masculina</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="style.css?v=5">
   <style>
     /* ── Page Layout ─────────────────────────── */
     .product-detail-wrap {
@@ -101,7 +102,7 @@
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: var(--crimson);
+      color: var(--gold);
       margin-bottom: 10px;
     }
 
@@ -152,14 +153,28 @@
       display: flex;
       align-items: baseline;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
     }
 
     .prod-price-current {
       font-family: var(--font-display);
       font-size: 2rem;
       font-weight: 900;
+      color: var(--black);
+    }
+
+    .pix-price-line {
+      font-size: .88rem;
+      color: #1a9e50;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .save-line {
+      font-size: .8rem;
       color: var(--crimson);
+      font-weight: 600;
+      margin-bottom: 18px;
     }
 
     .prod-price-old {
@@ -779,6 +794,9 @@
         <span class="prod-price-old" id="prod-price-old" style="display:none"></span>
         <span class="prod-price-badge" id="prod-discount-badge" style="display:none"></span>
       </div>
+      <div class="pix-price-line" id="pix-price-line"></div>
+      <div class="save-line" id="save-line" style="display:none"></div>
+      <div style="font-size:.8rem;color:var(--gray-600);margin-bottom:18px">🚚 Frete grátis em compras acima de R$ 300</div>
 
       <!-- Stock -->
       <div class="prod-stock-line" id="prod-stock-line">
@@ -813,17 +831,27 @@
         </button>
       </div>
 
+      <button class="btn-buy-now" id="btn-buy-now" onclick="buyNowFromDetail()"
+        style="width:100%;padding:15px;border-radius:var(--radius);background:var(--gold);color:var(--black);font-size:.95rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;transition:all .25s">
+        ⚡ Comprar Agora
+      </button>
+
       <button class="btn-wishlist" id="btn-wishlist">
         <span id="wishlist-icon">🤍</span>
         <span id="wishlist-text">Adicionar à Lista de Desejos</span>
       </button>
+
+      <a id="whats-doubt-link" href="https://wa.me/5516993603482" target="_blank" rel="noopener noreferrer"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;font-size:.85rem;font-weight:600;color:#1a9e50">
+        💬 Dúvidas sobre tamanho ou tecido? Chame no WhatsApp
+      </a>
 
       <!-- Trust badges -->
       <div class="trust-row">
         <div class="trust-item"><span>🔒</span><span>Compra 100% segura</span></div>
         <div class="trust-item"><span>🛍️</span><span>Ofertas exclusivas pelo site</span></div>
         <div class="trust-item"><span>🔄</span><span>Troca em 30 dias</span></div>
-        <div class="trust-item"><span>💳</span><span>Parcele em até 12×</span></div>
+        <div class="trust-item"><span>⚡</span><span>Pix com aprovação na hora</span></div>
       </div>
     </div>
   </div>
@@ -948,7 +976,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="firebase-lkmodas.js?v=2"></script>
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 <script>
 'use strict';
 
@@ -1205,6 +1233,7 @@ function renderInfo(p) {
   document.getElementById('prod-price-current').textContent = formatPricePg(p.price);
   document.getElementById('prod-price-old').style.display = 'none';
   document.getElementById('prod-discount-badge').style.display = 'none';
+  document.getElementById('save-line').style.display = 'none';
   if (p.oldPrice) {
     const discountEl = document.getElementById('prod-discount-badge');
     const disc = Math.round((1 - p.price / p.oldPrice) * 100);
@@ -1212,6 +1241,17 @@ function renderInfo(p) {
     document.getElementById('prod-price-old').style.display = '';
     discountEl.textContent = `-${disc}%`;
     discountEl.style.display = '';
+    const saveEl = document.getElementById('save-line');
+    saveEl.textContent = `Você economiza ${formatPricePg(p.oldPrice - p.price)}`;
+    saveEl.style.display = '';
+  }
+  document.getElementById('pix-price-line').textContent = `⚡ ${formatPricePg(p.price)} à vista no Pix`;
+
+  // Link do WhatsApp com o nome do produto
+  const wl = document.getElementById('whats-doubt-link');
+  if (wl) {
+    const msg = `Olá! Tenho uma dúvida sobre o produto "${p.name}" (${window.location.href})`;
+    wl.href = 'https://wa.me/5516993603482?text=' + encodeURIComponent(msg);
   }
 
   // Stock
@@ -1310,16 +1350,16 @@ function changeQty(delta) {
 
 // ── Add to cart ──────────────────────────────
 function addToCartFromDetail() {
-  if (!currentProduct) return;
+  if (!currentProduct) return false;
   if (currentProduct.sizes && currentProduct.sizes.length && !selectedSize) {
     document.getElementById('size-error').textContent = 'Selecione um tamanho antes de adicionar.';
     document.getElementById('size-error').scrollIntoView({ behavior:'smooth', block:'center' });
-    return;
+    return false;
   }
   const stock = Number.isFinite(Number(currentProduct.stock)) ? parseInt(Number(currentProduct.stock), 10) : 0;
   if (stock === 0) {
     showToast('Produto indisponível no momento.');
-    return;
+    return false;
   }
 
   const cartRaw  = JSON.parse(localStorage.getItem('lkmodas_cart') || '[]');
@@ -1329,7 +1369,7 @@ function addToCartFromDetail() {
 
   if (toAdd <= 0) {
     showToast(`Você já tem o máximo disponível (${stock}) no carrinho.`);
-    return;
+    return false;
   }
 
   // Adiciona direto no localStorage sem depender do cache do script.js
@@ -1352,6 +1392,21 @@ function addToCartFromDetail() {
     showToast(`⚠️ Apenas ${toAdd} unidade(s) adicionada(s) — limite de estoque atingido.`);
   } else {
     showToast(`✅ ${toAdd}× ${currentProduct.name} adicionado ao carrinho!`);
+  }
+  return true;
+}
+
+function buyNowFromDetail() {
+  const cartBefore = localStorage.getItem('lkmodas_cart');
+  const ok = addToCartFromDetail();
+  // Segue para o carrinho se adicionou agora OU se o produto já estava no máximo
+  const alreadyHas = (() => {
+    try {
+      return (JSON.parse(cartBefore || '[]')).some(i => String(i.id) === String(currentProduct?.id));
+    } catch { return false; }
+  })();
+  if (ok || alreadyHas) {
+    window.location.href = 'carrinho.html';
   }
 }
 

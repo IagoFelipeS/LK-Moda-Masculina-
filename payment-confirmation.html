@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Confirmar Pagamento — LK Moda Masculina</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="style.css?v=5">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -171,6 +172,10 @@
           <span class="info-label">Forma de Pagamento</span>
           <span class="info-value" id="paymentMethodLabel">—</span>
         </div>
+        <div id="orderItemsList" style="border-top:1px solid #e5e7eb;margin-top:10px;padding-top:10px;display:none">
+          <div style="font-size:.78rem;color:#6b7280;margin-bottom:6px">Itens do pedido</div>
+          <div id="orderItemsBody" style="font-size:.85rem;color:#374151;line-height:1.7"></div>
+        </div>
       </div>
 
       <!-- ── PIX SECTION ── -->
@@ -215,19 +220,30 @@
               <div class="key-owner">Titular: 27.811.253 LEANDRO MARTINZ QUERINO</div>
             </div>
 
-            <!-- Bank info -->
-            <div class="bank-info-box">
-              <h4>🏦 Dados bancários do recebedor</h4>
-              <div class="bank-row"><span>Banco</span><span>PagBank — PagSeguro (290)</span></div>
-              <div class="bank-row"><span>Agência</span><span>0001</span></div>
-              <div class="bank-row"><span>Conta</span><span>17907044-6 (Conta de Pagamento)</span></div>
-              <div class="bank-row"><span>CNPJ</span><span>27.811.253/0001-00</span></div>
-              <div class="bank-row"><span>Titular</span><span>27.811.253 LEANDRO MARTINZ QUERINO</span></div>
-            </div>
+            <!-- Bank info (recolhido — QR Code é o caminho principal) -->
+            <details class="bank-info-box" style="cursor:pointer">
+              <summary style="font-size:.85rem;font-weight:600;color:#374151">🏦 Prefere transferência manual? Ver dados bancários</summary>
+              <div style="margin-top:10px">
+                <div class="bank-row"><span>Banco</span><span>PagBank — PagSeguro (290)</span></div>
+                <div class="bank-row"><span>Agência</span><span>0001</span></div>
+                <div class="bank-row"><span>Conta</span><span>17907044-6 (Conta de Pagamento)</span></div>
+                <div class="bank-row"><span>CNPJ</span><span>27.811.253/0001-00</span></div>
+                <div class="bank-row"><span>Titular</span><span>27.811.253 LEANDRO MARTINZ QUERINO</span></div>
+              </div>
+            </details>
+
+            <!-- Comprovante via WhatsApp — acelera a aprovação manual -->
+            <a id="btnWhatsComprovante" href="#" target="_blank" rel="noopener noreferrer"
+              style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding:13px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:.9rem;text-decoration:none">
+              💬 Enviar comprovante pelo WhatsApp
+            </a>
+            <p style="text-align:center;font-size:.75rem;color:#6b7280;margin-top:6px">
+              Enviando o comprovante, seu pedido é aprovado mais rápido!
+            </p>
 
             <div class="pix-timer">
               <span class="timer-dot"></span>
-              <span>Verificando aprovação automaticamente a cada 5 segundos...</span>
+              <span id="reserveCountdown">Seu pedido está reservado por 30:00</span>
             </div>
           </div>
         </div>
@@ -304,7 +320,7 @@ function handleApprovedOrder(order) {
   }
 
   document.getElementById('approvedBanner').style.display = 'block';
-  document.getElementById('statusIcon').textContent        = 'âœ…';
+  document.getElementById('statusIcon').textContent        = '✅';
   document.getElementById('statusIcon').className         = 'status-icon status-approved';
   document.getElementById('statusTitle').textContent       = 'Pagamento Confirmado!';
   document.getElementById('statusMessage').textContent     = 'Seu pedido foi aprovado com sucesso.';
@@ -403,6 +419,26 @@ async function initPage() {
     orderData.paymentMethod === 'cartao' ? '💳 Cartão de Crédito' :
                                            '—';
 
+  // Mini-lista dos itens comprados
+  if (Array.isArray(orderData.items) && orderData.items.length) {
+    const body = document.getElementById('orderItemsBody');
+    body.innerHTML = orderData.items.map(it => {
+      const name = it.name || ('Produto #' + it.id);
+      return `<div>• ${name} ×${it.qty || 1}</div>`;
+    }).join('');
+    document.getElementById('orderItemsList').style.display = 'block';
+  }
+
+  // Link do comprovante via WhatsApp com o número do pedido
+  const btnComp = document.getElementById('btnWhatsComprovante');
+  if (btnComp) {
+    const msg = `Olá! Segue o comprovante do pedido ${currentOrderId} (LK Moda Masculina).`;
+    btnComp.href = 'https://wa.me/5516993603482?text=' + encodeURIComponent(msg);
+  }
+
+  // Countdown honesto de reserva (estoque já foi reservado no pedido)
+  startReserveCountdown(30 * 60);
+
   if (orderData.paymentMethod === 'pix') {
     document.getElementById('pixSection').style.display  = 'block';
     document.getElementById('cardSection').style.display = 'none';
@@ -484,27 +520,26 @@ function copiarPix() {
 /* ── Poll for admin approval every 5s ───────────────────────── */
 function checkStatus() {
   const order = JSON.parse(sessionStorage.getItem('currentOrder') || 'null');
-
-  if (order && order.status === 'approved') {
-    clearInterval(checkInterval);
-
-    document.getElementById('approvedBanner').style.display = 'block';
-    document.getElementById('statusIcon').textContent        = '✅';
-    document.getElementById('statusIcon').className         = 'status-icon status-approved';
-    document.getElementById('statusTitle').textContent       = 'Pagamento Confirmado!';
-    document.getElementById('statusMessage').textContent     = 'Seu pedido foi aprovado com sucesso.';
-    document.getElementById('pixSection').style.display      = 'none';
-    document.getElementById('cardSection').style.display     = 'none';
-
-    setTimeout(() => {
-      window.location.href = 'minha-conta.html?order=' + currentOrderId;
-    }, 3000);
-  }
+  if (order?.id === currentOrderId) handleApprovedOrder(order);
 }
 
-function checkStatus() {
-  const order = JSON.parse(sessionStorage.getItem('currentOrder') || 'null');
-  if (order?.id === currentOrderId) handleApprovedOrder(order);
+/* ── Countdown de reserva do pedido ─────────────────────────── */
+function startReserveCountdown(totalSeconds) {
+  const el = document.getElementById('reserveCountdown');
+  if (!el) return;
+  let remaining = totalSeconds;
+  function tick() {
+    if (remaining <= 0) {
+      el.textContent = 'Tempo de reserva encerrado — fale conosco no WhatsApp para confirmar seu pedido.';
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    el.textContent = `⏱ Seu pedido está reservado por ${m}:${String(s).padStart(2, '0')}`;
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+  tick();
 }
 
 document.addEventListener('DOMContentLoaded', initPage);

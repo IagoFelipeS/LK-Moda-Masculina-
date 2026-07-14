@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LK — Moda Masculina</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="style.css?v=5">
   
   </head>
 <body>
@@ -31,7 +32,7 @@
       </ul>
     </nav>
     <div class="header-actions">
-      <button class="user-btn">Entrar</button>
+      <a href="minha-conta.html" class="user-btn" id="minha-conta-btn" style="text-decoration:none">👤 Minha Conta</a>
       <a href="carrinho.html" class="cart-btn">
         🛒 Carrinho
         <span class="cart-count" style="display:none">0</span>
@@ -52,6 +53,7 @@
    
     <li><a href="produtos.html?categoria=masculino">Masculino</a></li>
     <li><a href="produtos.html?categoria=infantil">Infantil</a></li>
+    <li><a href="minha-conta.html">👤 Minha Conta</a></li>
     <li><a href="carrinho.html">Carrinho</a></li>
     <li><a href="login.html">Entrar / Cadastrar</a></li>
   </ul>
@@ -66,11 +68,12 @@
   </div>
   <div class="container">
     <div class="hero-content">
-      <h1>O basico que não sai de moda</h1>
+      <span class="hero-eyebrow">Nova Coleção 2026</span>
+      <h1>O básico que <em>não sai de moda</em></h1>
       <p>Descubra peças únicas que expressam quem você é. Moda acessível com elegância que faz a diferença.</p>
       <div class="hero-cta">
-        <a href="produtos.html" class="btn btn-crimson">Ver Coleção</a>
-       
+        <a href="produtos.html" class="btn btn-gold" style="font-weight:700">Ver Coleção</a>
+        <a href="#grid-top" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.5)">Mais Vendidos</a>
       </div>
     </div>
   </div>
@@ -80,7 +83,11 @@
 <!-- CATEGORIES -->
 <section class="categories-strip">
   <div class="cat-grid">
-    
+    <a href="produtos.html" class="cat-card">
+      <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=400&fit=crop&q=80" alt="Promoções">
+      <div class="cat-card-label">
+        <h3>Promoções</h3>
+        <span style="color:#ff6b81;font-weight:700">Até 50% OFF →</span>
       </div>
     </a>
     <a href="produtos.html?categoria=masculino" class="cat-card">
@@ -129,7 +136,7 @@
     <div class="section-header">
       <div>
         <h2 class="section-title">Mais <span>Vendidos</span></h2>
-        <p class="section-sub">Os favoritos das nossas clientes</p>
+        <p class="section-sub">Os favoritos dos nossos clientes</p>
       </div>
       <a href="produtos.html">Ver todos →</a>
     </div>
@@ -220,10 +227,7 @@
     </div>
     <div class="footer-bottom">
       <span>© 2026 LK Moda Masculina. Todos os direitos reservados.</span>
-      <div style="display:flex;gap:16px">
-        <span>Privacidade</span>
-        <span>Termos</span>
-      </div>
+      <span style="display:flex;align-items:center;gap:6px">⚡ Pagamento via Pix — rápido e seguro</span>
     </div>
   </div>
 </footer>
@@ -233,6 +237,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="firebase-lkmodas.js?v=2"></script>
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 </body>
 </html>

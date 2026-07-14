@@ -12,6 +12,10 @@ const CART_KEY    = 'lkmodas_cart';
 const SESSION_KEY = 'lkmodas_session';
 const ORDERS_KEY  = 'lkmodas_orders';
 
+/* ── Regras de negócio compartilhadas ────────────────────────── */
+const FRETE_GRATIS_MIN = 300;   // frete grátis acima deste subtotal
+const WHATSAPP_NUM     = '5516993603482';
+
 /* ── Helpers de storage ──────────────────────────────────────── */
 function storageGet(key, def) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
@@ -261,6 +265,13 @@ function badgeHTML(badge) {
   const b = m[badge]; return b ? `<span class="badge ${b[0]}">${b[1]}</span>` : '';
 }
 
+function stockHTML(p) {
+  if (p.stock === 0)  return `<div class="product-stock unavailable">Indisponível</div>`;
+  if (p.stock === 1)  return `<div class="product-stock stock-low">🔥 Última unidade!</div>`;
+  if (p.stock <= 3)   return `<div class="product-stock stock-low">🔥 Últimas ${p.stock} unidades!</div>`;
+  return `<div class="product-stock stock-ok">✓ Pronta entrega</div>`;
+}
+
 function productCardHTML(p) {
   const disc    = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
   const unavail = p.stock === 0;
@@ -268,7 +279,10 @@ function productCardHTML(p) {
     <article class="product-card" data-id="${p.id}">
       <div class="product-img-wrap">
         <img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.src='${FALLBACK_IMG}'">
-        <div class="product-badges">${badgeHTML(p.badge)}</div>
+        <div class="product-badges">
+          ${disc > 0 ? `<span class="badge badge-discount">-${disc}%</span>` : ''}
+          ${badgeHTML(p.badge)}
+        </div>
         <button class="product-quick-add btn-add-cart" data-id="${p.id}" ${unavail ? 'disabled' : ''}>
           ${unavail ? 'Indisponível' : '+ Adicionar ao Carrinho'}
         </button>
@@ -281,9 +295,7 @@ function productCardHTML(p) {
           ${p.oldPrice ? `<span class="price-old">${formatPrice(p.oldPrice)}</span>` : ''}
           ${disc > 0   ? `<span class="price-discount">-${disc}%</span>` : ''}
         </div>
-        <div class="product-stock ${unavail ? 'unavailable' : ''}">
-          ${unavail ? 'Indisponível' : `Em estoque: ${p.stock}`}
-        </div>
+        ${stockHTML(p)}
       </div>
     </article>`;
 }
@@ -495,6 +507,7 @@ function initCart() {
     }));
 
     updateSummary(Cart.total());
+    renderCrossSell(valid, prods);
   }
 
   function updateSummary(total) {
@@ -512,6 +525,72 @@ function initCart() {
     } else {
       if (t) t.textContent = formatPrice(total);
     }
+    updateFreeShipBar(total);
+  }
+
+  function updateFreeShipBar(subtotal) {
+    const bar = document.getElementById('free-ship-bar');
+    if (!bar) return;
+    if (subtotal <= 0) { bar.style.display = 'none'; return; }
+    bar.style.display = 'block';
+    const falta = FRETE_GRATIS_MIN - subtotal;
+    const pct   = Math.min(100, (subtotal / FRETE_GRATIS_MIN) * 100);
+    if (falta > 0) {
+      bar.classList.remove('done');
+      bar.innerHTML = `
+        <div class="fs-msg">🚚 Faltam <strong>${formatPrice(falta)}</strong> para FRETE GRÁTIS</div>
+        <div class="free-ship-track"><div class="free-ship-fill" style="width:${pct}%"></div></div>`;
+    } else {
+      bar.classList.add('done');
+      bar.innerHTML = `
+        <div class="fs-msg">🎉 Você ganhou <strong>FRETE GRÁTIS!</strong></div>
+        <div class="free-ship-track"><div class="free-ship-fill" style="width:100%"></div></div>`;
+    }
+  }
+
+  /* Cross-sell: sugere peças que combinam (mesma categoria, em estoque, fora do carrinho) */
+  function renderCrossSell(cartItems, prods) {
+    const box = document.getElementById('cross-sell');
+    if (!box) return;
+    const inCart = new Set(cartItems.map(i => String(i.id)));
+    const cats   = new Set(cartItems.map(i => {
+      const p = prods.find(x => sameId(x.id, i.id));
+      return p ? p.category : null;
+    }).filter(Boolean));
+
+    const suggestions = prods
+      .filter(p => !inCart.has(String(p.id)) && p.stock > 0)
+      .sort((a, b) => {
+        const aCat = cats.has(a.category) ? 0 : 1;
+        const bCat = cats.has(b.category) ? 0 : 1;
+        if (aCat !== bCat) return aCat - bCat;
+        const aFeat = a.featured ? 0 : 1;
+        const bFeat = b.featured ? 0 : 1;
+        if (aFeat !== bFeat) return aFeat - bFeat;
+        return a.price - b.price;
+      })
+      .slice(0, 4);
+
+    if (!suggestions.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = `
+      <h3>Complete o look ✨</h3>
+      <div class="cross-sell-grid">
+        ${suggestions.map(p => `
+          <div class="cross-sell-card">
+            <img src="${p.img}" alt="${p.name}" loading="lazy"
+              onerror="this.src='${FALLBACK_IMG}'"
+              onclick="window.location.href='produto.html?id=${p.id}'">
+            <div class="cross-sell-info">
+              <div class="cs-name">${p.name}</div>
+              <div class="cs-price">${formatPrice(p.price)}</div>
+              <button class="cs-add" data-id="${p.id}">+ Adicionar</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    box.querySelectorAll('.cs-add').forEach(btn => {
+      btn.addEventListener('click', () => { Cart.add(btn.dataset.id); render(); });
+    });
   }
 
   render();
@@ -615,6 +694,47 @@ function initCheckout() {
   window.addEventListener('products-updated', initCheckout);
 }
 
+/* ── Top-bar rotativa (mensagens de oferta) ─────────────────── */
+function initTopbarRotator() {
+  const bar = document.getElementById('top-bar');
+  if (!bar) return;
+  const msgs = [
+    `🚚 <strong>FRETE GRÁTIS</strong> em compras acima de R$ ${FRETE_GRATIS_MIN}`,
+    '🔥 Até <strong>50% OFF</strong> em peças selecionadas',
+    '🔄 <strong>Troca fácil</strong> em até 30 dias',
+  ];
+  let i = 0;
+  setInterval(() => {
+    bar.classList.add('fading');
+    setTimeout(() => {
+      i = (i + 1) % msgs.length;
+      bar.innerHTML = msgs[i];
+      bar.classList.remove('fading');
+    }, 400);
+  }, 4500);
+}
+
+/* ── Botão flutuante de WhatsApp ────────────────────────────── */
+function initWhatsAppButton() {
+  const a = document.createElement('a');
+  a.href = `https://wa.me/${WHATSAPP_NUM}?text=` + encodeURIComponent('Olá! Vim pelo site da LK Moda Masculina e tenho uma dúvida.');
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.id = 'btn-whatsapp';
+  a.setAttribute('aria-label', 'Falar no WhatsApp');
+  a.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+  a.style.cssText = `
+    position:fixed; bottom:24px; left:24px; z-index:9998;
+    width:54px; height:54px; border-radius:50%;
+    background:#25D366; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 20px rgba(37,211,102,.45);
+    transition:transform .2s, box-shadow .2s;
+  `;
+  a.onmouseenter = () => { a.style.transform = 'scale(1.08)'; a.style.boxShadow = '0 8px 28px rgba(37,211,102,.6)'; };
+  a.onmouseleave = () => { a.style.transform = ''; a.style.boxShadow = '0 4px 20px rgba(37,211,102,.45)'; };
+  document.body.appendChild(a);
+}
+
 /* ── Botão flutuante de rastreamento ────────────────────────── */
 function initTrackingButton() {
   const btn = document.createElement('a');
@@ -648,6 +768,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initLogin();
   initCadastro();
   initTrackingButton();
+  initWhatsAppButton();
+  initTopbarRotator();
   initCheckout();
 
   /* Quando Firebase estiver pronto, inicia sync de produtos */

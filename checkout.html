@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout — LK Moda Masculina</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="style.css?v=5">
   <style>
     @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
     .cep-wrapper { position: relative; }
@@ -192,7 +193,14 @@
 
       </div>
 
-      <button type="submit" class="btn btn-crimson btn-full" style="font-size:1rem;padding:16px">
+      <!-- Microsselos de confiança -->
+      <div style="display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:16px;font-size:.78rem;color:var(--gray-600)">
+        <span>🔒 Compra 100% segura</span>
+        <span>⚡ Pix aprovado em segundos</span>
+        <span>🏬 Loja física em Brodowski-SP</span>
+      </div>
+
+      <button type="submit" id="btn-submit-order" class="btn btn-crimson btn-full" style="font-size:1rem;padding:16px">
         Confirmar Pedido →
       </button>
       <p style="font-size:.78rem;color:var(--gray-400);text-align:center;margin-top:12px">
@@ -201,8 +209,8 @@
     </form>
 
     <!-- RIGHT: ORDER SUMMARY -->
-    <div class="order-summary">
-      <h3>Resumo do Pedido</h3>
+    <div class="order-summary collapsed" id="order-summary">
+      <h3 id="os-header">Resumo do Pedido <span class="os-total" id="os-header-total"></span></h3>
       <div id="order-items"></div>
       <div class="order-divider"></div>
       <div class="summary-line" style="margin-bottom:8px">
@@ -249,7 +257,7 @@
 <script src="firebase-lkmodas.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="emailjs-lkmodas.js"></script>
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 <script>
 // Verifica se o cliente está logado — redireciona para login se não estiver
 (function checkAuth() {
@@ -362,10 +370,29 @@ function atualizarResumoFrete() {
   }
   if (grandEl) grandEl.textContent = fmtBRL(subtotal + effectiveShipping);
 
+  // Total dinâmico no botão de confirmar e no cabeçalho do resumo (mobile)
+  const submitBtn = document.getElementById('btn-submit-order');
+  if (submitBtn && !submitBtn.disabled) {
+    submitBtn.textContent = subtotal > 0
+      ? `Confirmar Pedido — ${fmtBRL(subtotal + effectiveShipping)} →`
+      : 'Confirmar Pedido →';
+  }
+  const osTotal = document.getElementById('os-header-total');
+  if (osTotal) osTotal.textContent = subtotal > 0 ? fmtBRL(subtotal + effectiveShipping) : '';
+
   // Salva nos hidden inputs para o submit usar
   document.getElementById('frete-valor').value = effectiveShipping;
   document.getElementById('frete-tipo').value  = selectedFrete;
 }
+
+// Accordion do resumo no mobile (no desktop o CSS ignora a classe)
+document.getElementById('os-header')?.addEventListener('click', () => {
+  document.getElementById('order-summary')?.classList.toggle('collapsed');
+});
+
+// Mantém botão/cabeçalho com o total assim que o resumo é populado
+document.addEventListener('DOMContentLoaded', atualizarResumoFrete);
+window.addEventListener('products-updated', () => setTimeout(atualizarResumoFrete, 0));
 
 function exibirFrete(uf) {
   const t = FRETE_TABLE[uf] || FRETE_DEFAULT;
@@ -542,6 +569,14 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
     isValid = false;
   }
   if (!isValid) return;
+
+  // Bloqueia o botão para evitar clique duplo e mostra progresso
+  const submitBtn = document.getElementById('btn-submit-order');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '.65';
+    submitBtn.textContent = '⏳ Processando seu pedido...';
+  }
 
   // Criar objeto do pedido
   const orderId = 'PED-' + Date.now();
