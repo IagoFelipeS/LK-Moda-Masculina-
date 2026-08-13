@@ -20,3 +20,6 @@ build/
 .settings/
 *.sublime-workspace
 .tmp.driveupload/
+.venv/
+__pycache__/
+*.pyc
